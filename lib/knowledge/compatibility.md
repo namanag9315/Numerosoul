@@ -1,0 +1,3 @@
+# COMPATIBILITY
+
+Information about COMPATIBILITY.

@@ -1,0 +1,3 @@
+# COLORS AND REMEDIES
+
+Information about COLORS AND REMEDIES.

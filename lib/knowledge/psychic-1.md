@@ -1,0 +1,3 @@
+# PSYCHIC NUMBERS (MULANK)
+
+Information about PSYCHIC NUMBERS (MULANK).

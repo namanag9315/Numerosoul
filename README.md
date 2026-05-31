@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NumeroSoul
 
-## Getting Started
+NumeroSoul is a Next.js booking, numerology, invoicing, and customer-care app for Uma Rastogi in Badaun, Uttar Pradesh.
 
-First, run the development server:
+## Customer Journey Automation
+
+After a successful Razorpay payment, the app now:
+
+- creates a confirmed booking in Supabase
+- creates a Google Calendar event and Google Meet link when Calendar credentials are configured
+- generates an invoice number and public invoice link
+- sends the booking details, video link, and invoice by email and WhatsApp
+- supports reminder cron jobs before the session
+- lets the admin send post-session notes, report links, and follow-up dates
+- supports due follow-up reminders and promotional broadcasts by email or WhatsApp
+
+## Key Routes
+
+- `/book` - customer booking and payment flow
+- `/booking-confirmed` - post-payment summary with invoice and video links
+- `/invoice/[bookingId]` - printable branded invoice
+- `/api/send-reminder` - cron endpoint for next-day session reminders
+- `/api/send-followups` - cron endpoint for due follow-up reminders
+- `/admin/dashboard` - bookings, client notes, post-session care, invoicing, and campaigns
+
+## Environment Variables
+
+Core:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SITE_URL=https://numerasoul.in
+NEXT_PUBLIC_WHATSAPP_NUMBER=91XXXXXXXXXX
+CRON_SECRET=your-cron-secret
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Payments:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+NEXT_PUBLIC_RAZORPAY_KEY_ID=...
+RAZORPAY_KEY_SECRET=...
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Supabase:
 
-## Learn More
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
 
-To learn more about Next.js, take a look at the following resources:
+Email:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+BREVO_API_KEY=...
+BREVO_SENDER_EMAIL=numerosoul6@gmail.com
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+WhatsApp Business API:
 
-## Deploy on Vercel
+```bash
+WHATSAPP_ACCESS_TOKEN=...
+WHATSAPP_PHONE_NUMBER_ID=...
+WHATSAPP_TEMPLATE_BOOKING_CONFIRMATION=...
+WHATSAPP_TEMPLATE_SESSION_REMINDER=...
+WHATSAPP_TEMPLATE_POST_SESSION=...
+WHATSAPP_TEMPLATE_FOLLOW_UP=...
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Optional Twilio WhatsApp fallback:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+TWILIO_ACCOUNT_SID=...
+TWILIO_AUTH_TOKEN=...
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+```
+
+Google Calendar and Meet:
+
+```bash
+GOOGLE_SERVICE_ACCOUNT_EMAIL=...
+GOOGLE_PRIVATE_KEY=...
+GOOGLE_CALENDAR_ID=...
+```
+
+If Google Meet is not configured, set a default video link:
+
+```bash
+SESSION_VIDEO_URL=https://meet.google.com/...
+```
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+Open http://localhost:3000.
