@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  const body = await readRequestJson(request);
   const { date, serviceId, timeSlot } = body as {
     date?: string;
     serviceId?: string;
@@ -37,7 +37,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Could not hold this slot." }, { status: 409 });
     }
 
-    const data = await response.json();
+    const data = await readResponseJson<{
+      expiresAt?: string;
+      expires_at?: string;
+      holdId?: string;
+      id?: string;
+    }>(response);
     return NextResponse.json({
       expiresAt: data.expiresAt ?? data.expires_at ?? expiresAt,
       holdId: data.holdId ?? data.id,
@@ -49,4 +54,26 @@ export async function POST(request: NextRequest) {
     holdId: `hold_mock_${Date.now()}`,
     source: "local-fallback",
   });
+}
+
+async function readRequestJson(request: NextRequest) {
+  try {
+    return await request.json();
+  } catch {
+    return {};
+  }
+}
+
+async function readResponseJson<T>(response: Response): Promise<Partial<T>> {
+  const text = await response.text();
+
+  if (!text.trim()) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return {};
+  }
 }

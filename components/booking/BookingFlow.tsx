@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { SERVICES, type NumerologyService } from "@/lib/services";
@@ -78,12 +79,10 @@ export function BookingFlow() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState("");
-  const [transactionId, setTransactionId] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [session, setSession] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profiles, setProfiles] = useState<any[]>([]);
-
   useEffect(() => {
     const fetchProfiles = async (token: string) => {
       try {
@@ -91,7 +90,8 @@ export function BookingFlow() {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
-          setProfiles(await res.json());
+          const data = await readJsonResponse<unknown[]>(res);
+          setProfiles(Array.isArray(data) ? data : []);
         }
       } catch {
         // ignore
@@ -181,7 +181,7 @@ export function BookingFlow() {
     const month = formatMonthKey(visibleMonth);
 
     fetch(`/api/booked-slots?month=${month}`, { signal: controller.signal })
-      .then((response) => response.json())
+      .then((response) => readJsonResponse<{ slots?: BookedSlot[] }>(response))
       .then((data) => setBookedSlots(Array.isArray(data.slots) ? data.slots : []))
       .catch(() => setBookedSlots([]));
 
@@ -208,15 +208,17 @@ export function BookingFlow() {
     setSelectedSlot(null);
     setHoldExpiresAt(null);
     fetch(`/api/check-availability?date=${dateKey}`)
-      .then((response) => response.json())
+      .then((response) => readJsonResponse<{ bookedTimeSlots?: string[] }>(response))
       .then((data) => {
-        if (!Array.isArray(data.bookedTimeSlots)) {
+        const bookedTimeSlots = data.bookedTimeSlots;
+
+        if (!Array.isArray(bookedTimeSlots)) {
           return;
         }
 
         setBookedSlots((current) => [
           ...current.filter((slot) => slot.date !== dateKey),
-          ...data.bookedTimeSlots.map((timeSlot: string) => ({
+          ...bookedTimeSlots.map((timeSlot: string) => ({
             date: dateKey,
             status: "confirmed",
             time_slot: timeSlot,
@@ -244,7 +246,7 @@ export function BookingFlow() {
           timeSlot: slot,
         }),
       });
-      const data = await response.json();
+      const data = await readJsonResponse<{ expiresAt?: string | null }>(response);
       setHoldExpiresAt(data.expiresAt ?? null);
     } catch {
       setHoldExpiresAt(null);
@@ -269,7 +271,11 @@ export function BookingFlow() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, serviceId: selectedService.id, subtotal }),
       });
-      const data = await response.json();
+      const data = await readJsonResponse<{
+        discount?: number;
+        message?: string;
+        valid?: boolean;
+      }>(response);
 
       if (!response.ok || !data.valid) {
         setCoupon({ code, discount: 0, message: data.message ?? "Coupon not valid." });
@@ -278,7 +284,7 @@ export function BookingFlow() {
 
       setCoupon({
         code,
-        discount: data.discount,
+        discount: data.discount ?? 0,
         message: data.message ?? "Coupon applied.",
       });
     } catch {
@@ -290,11 +296,6 @@ export function BookingFlow() {
 
   const payNow = async () => {
     if (!selectedService || !selectedDate || !selectedSlot) {
-      return;
-    }
-
-    if (!transactionId.trim()) {
-      setPaymentError("Please enter your 12-digit UPI Transaction ID (UTR).");
       return;
     }
 
@@ -317,23 +318,75 @@ export function BookingFlow() {
 
     try {
       localStorage.setItem("numeraBookingSummary", JSON.stringify(bookingPayload));
-      await verifyPayment({
-        booking: bookingPayload,
-        transactionId: transactionId.trim(),
+      
+      const orderResponse = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: total }),
       });
+      const orderData = await orderResponse.json();
+
+      if (!orderResponse.ok || !orderData.success) {
+        throw new Error(orderData.message || "Failed to create order.");
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "NumeroSoul",
+        description: selectedService.title,
+        order_id: orderData.orderId,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        handler: async function (response: any) {
+          try {
+            await verifyPayment({
+              booking: bookingPayload,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+          } catch (error) {
+            setPaymentError(error instanceof Error ? error.message : "Payment verification failed.");
+            setPaymentLoading(false);
+          }
+        },
+        prefill: {
+          name: details.fullName,
+          email: details.email,
+          contact: details.phone,
+        },
+        theme: {
+          color: "#E8A020",
+        },
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rzp = new (window as any).Razorpay(options);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rzp.on('payment.failed', function (response: any) {
+        setPaymentError(response.error.description || "Payment failed. Please try again.");
+        setPaymentLoading(false);
+      });
+      rzp.open();
     } catch (error) {
-      setPaymentError(error instanceof Error ? error.message : "Payment could not be verified.");
+      setPaymentError(error instanceof Error ? error.message : "Could not initiate payment.");
       setPaymentLoading(false);
     }
   };
 
   const verifyPayment = async ({
     booking,
-    transactionId,
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
   }: {
     booking: Record<string, unknown>;
-    transactionId: string;
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
   }) => {
+    setPaymentLoading(true);
     const response = await fetch("/api/verify-payment", {
       method: "POST",
       headers: {
@@ -342,13 +395,22 @@ export function BookingFlow() {
       },
       body: JSON.stringify({
         bookingDetails: booking,
-        transactionId,
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
       }),
     });
-    const data = await response.json();
+    const data = await readJsonResponse<{
+      bookingId?: string;
+      invoiceNumber?: string;
+      invoiceUrl?: string;
+      message?: string;
+      success?: boolean;
+      videoConferenceLink?: string;
+    }>(response);
 
     if (!response.ok || !data.success) {
-      throw new Error(data.message ?? "Payment verification failed.");
+      throw new Error(data.message ?? "Payment verification failed. Please contact us if money was deducted.");
     }
 
     localStorage.setItem(
@@ -361,17 +423,18 @@ export function BookingFlow() {
     );
 
     router.push(
-      `/booking-confirmed?booking=${encodeURIComponent(data.bookingId ?? transactionId)}&service=${encodeURIComponent(
+      `/booking-confirmed?booking=${encodeURIComponent(data.bookingId ?? razorpay_order_id)}&service=${encodeURIComponent(
         selectedService?.title ?? "",
       )}&date=${encodeURIComponent(selectedDate ?? "")}&time=${encodeURIComponent(selectedSlot ?? "")}&invoice=${encodeURIComponent(
         data.invoiceUrl ?? "",
       )}&join=${encodeURIComponent(data.videoConferenceLink ?? "")}`,
     );
   };
-
   return (
-    <div className="mx-auto max-w-7xl px-6 pb-20 pt-32 sm:px-10 lg:px-16">
-      <div className="mx-auto max-w-4xl text-center">
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <div className="mx-auto max-w-7xl px-6 pb-20 pt-32 sm:px-10 lg:px-16">
+        <div className="mx-auto max-w-4xl text-center">
         <p className="eyebrow">✦ Secure your numerology session ✦</p>
         <h1 className="mt-4 font-display text-5xl font-bold text-[color:var(--text-primary)]">
           Book a <span className="italic text-[color:var(--sunrise-orange)]">Session</span>
@@ -431,8 +494,6 @@ export function BookingFlow() {
             tax={tax}
             total={total}
             payNow={payNow}
-            transactionId={transactionId}
-            setTransactionId={setTransactionId}
           />
         )}
 
@@ -477,7 +538,22 @@ export function BookingFlow() {
         </div>
       </div>
     </div>
+    </>
   );
+}
+
+async function readJsonResponse<T>(response: Response): Promise<T> {
+  const text = await response.text();
+
+  if (!text.trim()) {
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error("The server returned an invalid response. Please try again.");
+  }
 }
 
 function ProgressIndicator({ currentStep }: { currentStep: number }) {
@@ -954,8 +1030,6 @@ function PaymentStep({
   subtotal,
   tax,
   total,
-  transactionId,
-  setTransactionId,
 }: {
   applyCoupon: () => void;
   coupon: CouponState | null;
@@ -973,12 +1047,7 @@ function PaymentStep({
   subtotal: number;
   tax: number;
   total: number;
-  transactionId: string;
-  setTransactionId: (value: string) => void;
 }) {
-  const upiId = "naman555@ptaxis";
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=${upiId}&pn=Naman&cu=INR&am=${total}`;
-
   return (
     <div>
       <StepTitle title="Payment" subtitle="Review your booking summary and complete payment securely." />
@@ -1035,31 +1104,11 @@ function PaymentStep({
           </div>
 
           <h3 className="font-display text-xl font-medium text-[color:var(--text-primary)] mb-2">
-            Scan to Pay
+            Secure Payment
           </h3>
           <p className="text-sm text-[color:var(--text-secondary)] mb-4 text-center">
-            Scan the QR code below using any UPI app to pay <strong className="text-[color:var(--text-primary)]">{formatCurrency(total)}</strong>.
+            Click the button below to complete your payment securely via Razorpay.
           </p>
-
-          <div className="bg-white p-3 rounded-2xl shadow-sm border border-[color:var(--border)] mb-4">
-            <img src={qrCodeUrl} alt="UPI Payment QR Code" className="w-48 h-48" />
-          </div>
-          <p className="font-numeral text-xs text-[color:var(--text-muted)] mb-6 text-center">
-            UPI ID: <span className="font-bold text-[color:var(--text-primary)]">{upiId}</span>
-          </p>
-
-          <div className="w-full space-y-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-[color:var(--text-secondary)]">
-              Enter 12-Digit Transaction ID (UTR)
-            </label>
-            <input
-              type="text"
-              value={transactionId}
-              onChange={(e) => setTransactionId(e.target.value)}
-              placeholder="e.g. 312345678901"
-              className="w-full min-h-12 px-4 rounded-xl border border-[color:var(--border)] bg-white text-sm outline-none focus:border-[color:var(--sunrise-orange)] focus:shadow-[0_0_0_4px_rgba(249,115,22,0.12)] transition"
-            />
-          </div>
 
           <button
             type="button"
@@ -1068,7 +1117,7 @@ function PaymentStep({
             className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[color:var(--sunrise-orange)] px-6 text-sm font-medium text-white shadow-[0_16px_34px_rgba(249,115,22,0.15)] transition hover:bg-[#d95c11] disabled:opacity-55"
           >
             {paymentLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Confirm Payment
+            Pay via Razorpay
           </button>
           {paymentError && <p className="mt-3 text-sm text-[color:var(--rose)] text-center">{paymentError}</p>}
         </div>

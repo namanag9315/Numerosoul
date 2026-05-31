@@ -18,7 +18,7 @@ const localCoupons: Record<string, { discountAmount?: number; discountPercent?: 
 };
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  const body = await readRequestJson(request);
   const code = String(body.code ?? "").trim().toUpperCase();
   const subtotal = Number(body.subtotal ?? 0);
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (response.ok) {
-      const records = (await response.json()) as CouponRecord[];
+      const records = await readResponseJson<CouponRecord[]>(response, []);
       const coupon = records[0];
 
       if (
@@ -76,6 +76,28 @@ export async function POST(request: NextRequest) {
     source: "local-fallback",
     valid: true,
   });
+}
+
+async function readRequestJson(request: NextRequest) {
+  try {
+    return await request.json();
+  } catch {
+    return {};
+  }
+}
+
+async function readResponseJson<T>(response: Response, fallback: T): Promise<T> {
+  const text = await response.text();
+
+  if (!text.trim()) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 function calculateDiscount(
