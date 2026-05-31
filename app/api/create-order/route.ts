@@ -42,8 +42,21 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Razorpay order creation failed:", error);
+    
+    // Razorpay SDK often throws an object with an 'error' property
+    let errorMessage = "Failed to create order";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === "object" && error !== null && "error" in error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rzpError = (error as any).error;
+      if (rzpError && rzpError.description) {
+        errorMessage = rzpError.description;
+      }
+    }
+
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Failed to create order" },
+      { message: errorMessage },
       { status: 500 }
     );
   }
