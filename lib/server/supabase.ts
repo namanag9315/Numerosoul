@@ -132,7 +132,9 @@ export async function insertClient(input: ClientInput) {
   });
 
   if (!response.ok) {
-    throw new Error("Could not create client.");
+    const errorText = await response.text().catch(() => "Unknown error");
+    console.error("Supabase create client error:", errorText);
+    throw new Error(`Could not create client. Supabase Error: ${errorText}`);
   }
 
   const rows = (await response.json()) as Array<{ id: string }>;
@@ -188,7 +190,9 @@ export async function insertBooking({
   });
 
   if (!response.ok) {
-    throw new Error("Could not create booking.");
+    const errorText = await response.text().catch(() => "Unknown error");
+    console.error("Supabase create booking error:", errorText);
+    throw new Error(`Could not create booking. Supabase Error: ${errorText}`);
   }
 
   const rows = (await response.json()) as Array<{ id: string }>;
