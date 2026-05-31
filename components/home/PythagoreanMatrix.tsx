@@ -36,7 +36,7 @@ export function PythagoreanMatrix() {
     <section
       id="matrix"
       ref={containerRef}
-      className="relative px-6 py-24 sm:px-10 lg:px-16 overflow-hidden bg-[#0D0820] text-[#FAF3E0] section-gradient-depth-dark"
+      className="relative px-6 py-24 sm:px-10 lg:px-16 overflow-hidden bg-[#0D0820] text-[#FAF3E0] section-gradient-depth-dark hidden md:block"
       style={{
         background: "linear-gradient(145deg, #0A0516 0%, #17082E 48%, #0A0516 100%)",
       }}

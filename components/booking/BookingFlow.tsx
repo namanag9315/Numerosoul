@@ -149,6 +149,10 @@ export function BookingFlow() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
   const handleSignIn = async () => {
     localStorage.setItem("bookingFlowState", JSON.stringify({
       step,
