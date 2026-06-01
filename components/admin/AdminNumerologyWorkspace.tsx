@@ -37,6 +37,8 @@ import { AdminChatbot } from "./AdminChatbot";
 import { AdvancedPremiumReportGenerator } from "./AdvancedPremiumReportGenerator";
 import { ChatMessage } from "@/components/ChatMessage";
 import { NameCorrectionTool } from "./NameCorrectionTool";
+import { analysePlanes, type PlaneAnalysis } from "@/lib/loshu-planes";
+import { motion } from "framer-motion";
 
 interface Booking {
   id: string;
@@ -665,7 +667,9 @@ function AdvancedLoShuGridAnalyser() {
   const result = useMemo(() => {
     if (!dob.trim()) return null;
     try {
-      return calculateLoShuGrid(dob);
+      const gridResult = calculateLoShuGrid(dob);
+      const planes = analysePlanes(gridResult.counts);
+      return { ...gridResult, advancedPlanes: planes };
     } catch {
       return null;
     }
@@ -815,50 +819,128 @@ function AdvancedLoShuGridAnalyser() {
             </div>
           </div>
 
-          {/* Section B: Plane Analysis */}
+          {/* SECTION 1 — YOG DETECTION */}
+          <div className="space-y-4">
+            {result.advancedPlanes.find((p) => p.isGoldenYog) ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                className="rounded-2xl border border-amber-300 bg-gradient-to-br from-amber-50 to-amber-100 p-6 shadow-lg shadow-amber-500/10 text-center"
+              >
+                <div className="flex justify-center mb-3">
+                  <Sparkles className="h-8 w-8 text-amber-500 animate-pulse" />
+                </div>
+                <h3 className="font-display text-2xl font-bold text-amber-700 tracking-widest uppercase">
+                  ✦ Golden Yog Detected ✦
+                </h3>
+                <p className="mt-2 text-sm font-medium text-amber-800 max-w-2xl mx-auto">
+                  {result.advancedPlanes.find((p) => p.isGoldenYog)?.reading}
+                </p>
+              </motion.div>
+            ) : result.advancedPlanes.find((p) => p.isSilverYog) ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                className="rounded-2xl border border-slate-300 bg-gradient-to-br from-slate-50 to-slate-200 p-6 shadow-lg shadow-slate-500/10 text-center"
+              >
+                <div className="flex justify-center mb-3">
+                  <Sparkles className="h-8 w-8 text-slate-500 animate-pulse" />
+                </div>
+                <h3 className="font-display text-2xl font-bold text-slate-700 tracking-widest uppercase">
+                  ✦ Silver Yog Detected ✦
+                </h3>
+                <p className="mt-2 text-sm font-medium text-slate-800 max-w-2xl mx-auto">
+                  {result.advancedPlanes.find((p) => p.isSilverYog)?.reading}
+                </p>
+              </motion.div>
+            ) : (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center">
+                <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Neither Yog is currently active
+                </span>
+                <p className="text-xs text-slate-600 mt-1">
+                  Missing numbers preventing activation:{" "}
+                  {[
+                    ...new Set([
+                      ...(result.advancedPlanes.find(p => p.name === 'Golden Yog')?.missingNumbers || []),
+                      ...(result.advancedPlanes.find(p => p.name === 'Silver Yog')?.missingNumbers || [])
+                    ])
+                  ].join(", ")}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* SECTION 2 — PLANES OVERVIEW */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Plane Alignment Breakdown
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Planes Overview
             </h4>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {result.planes.map((plane) => (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+              {result.advancedPlanes.map((plane) => (
                 <div
                   key={plane.name}
-                  className={`rounded-xl border p-4 space-y-2 flex flex-col justify-between ${
-                    plane.status === "complete"
-                      ? "border-green-200 bg-green-50/20"
-                      : plane.status === "partial"
-                      ? "border-amber-200 bg-amber-50/20"
-                      : "border-slate-200 bg-slate-50/40"
-                  }`}
+                  className="rounded-lg border border-slate-200 bg-white p-2 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer hover:border-[#E8A020]/30 transition-colors"
+                  onClick={() => document.getElementById(`plane-${plane.name.replace(/\\s+/g, '-')}`)?.scrollIntoView({ behavior: 'smooth' })}
                 >
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs font-bold text-slate-800">
-                        {plane.name}
-                      </span>
-                      <span
-                        className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                          plane.status === "complete"
-                            ? "bg-green-100 text-green-700"
-                            : plane.status === "partial"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-slate-100 text-slate-500"
-                        }`}
-                      >
-                        {plane.status}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 block font-semibold">
-                      Numbers: {plane.numbers.join(", ")}
-                    </span>
-                    <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                      {plane.description}
-                    </p>
-                  </div>
+                  <span className="font-display text-[10px] font-bold text-slate-700 leading-tight mb-1">
+                    {plane.name}
+                  </span>
+                  <span className="text-[9px] text-slate-400 mb-1.5">{plane.numbers.join('-')}</span>
+                  {plane.isComplete ? (
+                    <CheckCircle2 className="h-3 w-3 text-green-500" />
+                  ) : (
+                    <XCircle className="h-3 w-3 text-red-400" />
+                  )}
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* SECTION 3 — ROWS */}
+          <div className="space-y-4 pt-4 border-t border-slate-100">
+            <h3 className="font-display text-lg font-bold text-slate-800">Horizontal Planes — Rows</h3>
+            <div className="grid gap-4 md:grid-cols-3">
+              {result.advancedPlanes.filter((p) => p.type === 'row').map((plane) => (
+                <PlaneDetailCard key={plane.name} plane={plane} />
+              ))}
+            </div>
+          </div>
+
+          {/* SECTION 4 — COLUMNS */}
+          <div className="space-y-4 pt-4 border-t border-slate-100">
+            <h3 className="font-display text-lg font-bold text-slate-800">Vertical Planes — Columns</h3>
+            <div className="grid gap-4 md:grid-cols-3">
+              {result.advancedPlanes.filter((p) => p.type === 'column').map((plane) => (
+                <PlaneDetailCard key={plane.name} plane={plane} />
+              ))}
+            </div>
+          </div>
+
+          {/* SECTION 5 — DIAGONALS */}
+          <div className="space-y-4 pt-4 border-t border-slate-100">
+            <h3 className="font-display text-lg font-bold text-slate-800">Diagonal Planes — Yogs</h3>
+            <div className="grid gap-4 md:grid-cols-2 max-w-4xl">
+              {result.advancedPlanes.filter((p) => p.type === 'diagonal').map((plane) => (
+                <PlaneDetailCard key={plane.name} plane={plane} isSpecial />
+              ))}
+            </div>
+          </div>
+
+          {/* SECTION 6 — SUMMARY READING */}
+          <div className="rounded-xl border-l-4 border-l-[#E8A020] bg-[#FAF6EE] p-5 shadow-sm mt-8">
+            <h4 className="text-xs font-bold text-[#E8A020] uppercase tracking-wider mb-2">Automated Summary Reading</h4>
+            <p className="text-sm text-slate-700 leading-relaxed font-medium">
+              This chart has <strong>{result.advancedPlanes.filter(p => p.isComplete).length} complete planes</strong> and <strong>{result.advancedPlanes.filter(p => !p.isComplete).length} incomplete planes</strong>. 
+              {result.advancedPlanes.filter(p => p.isComplete).length > 0 && (
+                <> The strongest area is the <strong>{result.advancedPlanes.find(p => p.isComplete)?.name}</strong> — {result.advancedPlanes.find(p => p.isComplete)?.reading}</>
+              )}
+              {result.advancedPlanes.some(p => p.isGoldenYog || p.isSilverYog) && (
+                <span className="block mt-2 text-[#D4700A] font-bold">
+                  The {result.advancedPlanes.find(p => p.isGoldenYog) ? 'Golden' : 'Silver'} Yog is active — this is a highly significant indicator of lifelong success and abundance.
+                </span>
+              )}
+            </p>
           </div>
 
           {/* Section C: Remedies for Missing Numbers */}
@@ -1327,6 +1409,74 @@ function AIDeepDive({ section, parameters }: { section: string, parameters: Reco
       {report && !loading && (
         <div className="p-6 bg-white border border-violet-100/50 rounded-xl shadow-sm">
           <ChatMessage content={report} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlaneDetailCard({ plane, isSpecial = false }: { plane: PlaneAnalysis; isSpecial?: boolean }) {
+  const missingString = plane.missingNumbers.length > 0 ? `(Missing: ${plane.missingNumbers.join(', ')})` : '';
+  
+  return (
+    <div
+      id={`plane-${plane.name.replace(/\\s+/g, '-')}`}
+      className={`rounded-xl border p-4 space-y-3 flex flex-col h-full ${
+        isSpecial
+          ? plane.isComplete
+            ? plane.name === 'Golden Yog' ? 'border-amber-300 bg-amber-50/50' : 'border-slate-300 bg-slate-50/80'
+            : 'border-slate-200 bg-white'
+          : 'border-slate-200 bg-white shadow-sm hover:border-[#E8A020]/30 transition-colors'
+      }`}
+    >
+      <div>
+        <h4 className="font-display text-sm font-bold text-slate-800">
+          {plane.name} <span className="text-slate-400 font-normal">· {plane.numbers.join(' · ')}</span>
+        </h4>
+        
+        <div className="flex items-center justify-between mt-2 mb-3">
+          <div className="flex gap-1.5">
+            {plane.numbers.map((n: number) => {
+              const isPresent = plane.presentNumbers.includes(n);
+              return (
+                <div
+                  key={n}
+                  className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
+                    isPresent
+                      ? isSpecial 
+                        ? plane.name === 'Golden Yog' ? 'bg-amber-500 text-white' : 'bg-slate-600 text-white'
+                        : 'bg-[#E8A020] text-white'
+                      : 'border border-dashed border-slate-300 text-slate-400 bg-transparent'
+                  }`}
+                >
+                  {n}
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
+            plane.isComplete ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+          }`}>
+            {plane.isComplete ? 'COMPLETE ✓' : `INCOMPLETE ${missingString}`}
+          </div>
+        </div>
+
+        <p className="text-[13px] text-slate-600 leading-relaxed font-sans mt-2">
+          {plane.reading}
+        </p>
+      </div>
+      
+      {isSpecial && (
+        <div className="mt-auto pt-3 flex justify-end">
+          <div className="grid grid-cols-3 gap-0.5 w-12 h-12 opacity-50">
+             {[4,9,2,3,5,7,8,1,6].map(n => {
+                const isDiagonalNum = plane.numbers.includes(n);
+                return (
+                  <div key={n} className={`border ${isDiagonalNum ? (plane.name === 'Golden Yog' ? 'bg-amber-400 border-amber-500' : 'bg-slate-400 border-slate-500') : 'border-slate-200 bg-slate-50'} rounded-[1px]`} />
+                );
+             })}
+          </div>
         </div>
       )}
     </div>
