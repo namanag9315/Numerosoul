@@ -1,4 +1,4 @@
-export const SITE_URL = "https://numerasoul.in";
+export const SITE_URL = "https://numerosoul.in";
 
 export type BreadcrumbItem = {
   name: string;

@@ -30,6 +30,7 @@ const cinzel = Cinzel({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://numerosoul.in"),
+  applicationName: "NumeroSoul",
   title: {
     default: "NumeroSoul — Numerologist | Personal Readings, Baby Names, Vehicle Numbers",
     template: "%s | NumeroSoul",
