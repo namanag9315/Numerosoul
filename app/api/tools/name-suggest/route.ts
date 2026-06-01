@@ -64,7 +64,7 @@ Return ONLY a valid JSON array of strings in ALL CAPS. Do not include markdown f
         base[0] + base, // double first
         base + base[base.length - 1], // double last
         "A" + base,
-        base.replace(/[AEIOU]/g, (v) => v + v), // double vowels
+        base.replace(/[AEIOU]/g, (v: string) => v + v), // double vowels
       ];
     }
 
