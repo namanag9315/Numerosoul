@@ -404,3 +404,73 @@ export function calculateNameNumber(name: string, _system?: string) {
     letterValues: res.letterBreakdown,
   };
 }
+
+export function checkNameCompatibility(
+  nameNumber: number,
+  psychic: number,
+  destiny: number,
+): {
+  compatible: boolean;
+  rating: "excellent" | "good" | "neutral" | "challenging";
+  message: string;
+} {
+  const name = reduceToSingleDigit(nameNumber);
+  const d = reduceToSingleDigit(destiny);
+  const p = reduceToSingleDigit(psychic);
+
+  const getPair = (a: number, b: number) => [a, b].sort((x, y) => x - y).join("-");
+  const destinyPair = getPair(name, d);
+  const psychicPair = getPair(name, p);
+
+  const luckyPairs = new Set(["1-9", "2-7", "3-6", "1-4", "5-5", "1-8"]);
+  const neutralPairs = new Set(["1-5", "2-6", "3-9", "1-2", "1-3", "2-3", "2-5"]);
+  const challengingPairs = new Set(["4-8", "6-8", "4-5", "2-8", "1-7", "3-8", "2-9"]);
+
+  // Destiny match is the strongest
+  if (name === d) {
+    return {
+      compatible: true,
+      rating: "excellent",
+      message: "Excellent: Name vibrates perfectly with the Destiny number.",
+    };
+  }
+
+  if (name === p && luckyPairs.has(destinyPair)) {
+    return {
+      compatible: true,
+      rating: "excellent",
+      message: "Excellent: Name matches Psychic number and harmonizes with Destiny.",
+    };
+  }
+
+  if (luckyPairs.has(destinyPair)) {
+    return {
+      compatible: true,
+      rating: "good",
+      message: "Good: Name is highly compatible with the Destiny number.",
+    };
+  }
+
+  if (challengingPairs.has(destinyPair) || challengingPairs.has(psychicPair)) {
+    return {
+      compatible: false,
+      rating: "challenging",
+      message: "Challenging: Name clashes with core DOB numbers. Spelling adjustment recommended.",
+    };
+  }
+
+  if (neutralPairs.has(destinyPair)) {
+    return {
+      compatible: true,
+      rating: "neutral",
+      message: "Neutral: Acceptable, but could potentially be optimized for better alignment.",
+    };
+  }
+
+  return {
+    compatible: true,
+    rating: "neutral",
+    message: "Neutral: Balanced match, no major conflict.",
+  };
+}
+
