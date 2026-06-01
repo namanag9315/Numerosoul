@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     if (normalizedMode === "video") {
       // Generate a secure unique room ID for the native Jitsi session
       const roomId = crypto.randomUUID();
-      videoConferenceLink = `${process.env.NEXT_PUBLIC_SITE_URL || "https://numerasoul.in"}/session/${roomId}`;
+      videoConferenceLink = `${process.env.NEXT_PUBLIC_SITE_URL || "https://numerosoul.in"}/session/${roomId}`;
     }
 
     const invoiceNumber = createInvoiceNumber();

@@ -9,6 +9,19 @@ export const metadata: Metadata = {
   title: "Contact",
   description:
     "Contact NumeroSoul for numerology consultations, booking help, baby name numerology, vehicle number checks, and business numerology questions.",
+  alternates: {
+    canonical: "/contact",
+  },
+  openGraph: {
+    title: "Contact NumeroSoul",
+    description: "Contact NumeroSoul for numerology consultations, booking help, baby name numerology, vehicle number checks, and business numerology questions.",
+    url: "/contact",
+    type: "website",
+  },
+  twitter: {
+    title: "Contact NumeroSoul",
+    description: "Contact NumeroSoul for numerology consultations, booking help, baby name numerology, vehicle number checks, and business numerology questions.",
+  },
 };
 
 export default function ContactPage() {

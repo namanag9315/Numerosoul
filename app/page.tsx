@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   },
   description:
     "Professional numerology consultations in India. Life path, baby name, vehicle number, phone number, and business numerology by NumeroSoul. Book online. Free tools available.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function Home() {

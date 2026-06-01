@@ -5,13 +5,26 @@ import { FAQAccordion } from "@/components/services/FAQAccordion";
 import { ServiceCard } from "@/components/services/ServiceCard";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SERVICE_FAQS } from "@/lib/faqs";
-import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, faqPageJsonLd, serviceJsonLd } from "@/lib/seo";
 import { SERVICES } from "@/lib/services";
 
 export const metadata: Metadata = {
   title: "Numerology Consultation Services",
   description:
     "Explore NumeroSoul numerology services including personal readings, baby names, vehicle numbers, business numerology, Lo Shu grid, and compatibility sessions.",
+  alternates: {
+    canonical: "/services",
+  },
+  openGraph: {
+    title: "Numerology Consultation Services",
+    description: "Explore NumeroSoul numerology services including personal readings, baby names, vehicle numbers, business numerology, Lo Shu grid, and compatibility sessions.",
+    url: "/services",
+    type: "website",
+  },
+  twitter: {
+    title: "Numerology Consultation Services",
+    description: "Explore NumeroSoul numerology services including personal readings, baby names, vehicle numbers, business numerology, Lo Shu grid, and compatibility sessions.",
+  },
 };
 
 export default function ServicesPage() {
@@ -22,6 +35,7 @@ export default function ServicesPage() {
     <>
       <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Services", path: "/services" }])} />
       <JsonLd data={faqPageJsonLd(SERVICE_FAQS)} />
+      <JsonLd data={serviceJsonLd(SERVICES)} />
       <div className="page-shell selection:bg-[#E8A020]/20 selection:text-[#E8A020]">
         {/* Hero */}
         <section className="page-hero">

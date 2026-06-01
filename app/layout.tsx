@@ -29,7 +29,7 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://numerasoul.in"),
+  metadataBase: new URL("https://numerosoul.in"),
   title: {
     default: "NumeroSoul — Numerologist | Personal Readings, Baby Names, Vehicle Numbers",
     template: "%s | NumeroSoul",
@@ -64,7 +64,6 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },
-  alternates: { canonical: "https://numerasoul.in" },
 };
 
 export default function RootLayout({

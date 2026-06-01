@@ -10,6 +10,19 @@ export const metadata: Metadata = {
   title: "Free Numerology Calculators — Life Path, Name, Vehicle",
   description:
     "Use free NumeroSoul numerology calculators for life path, name number, vehicle or phone vibration, psychic number, and personal year cycles.",
+  alternates: {
+    canonical: "/tools",
+  },
+  openGraph: {
+    title: "Free Numerology Calculators — Life Path, Name, Vehicle",
+    description: "Use free NumeroSoul numerology calculators for life path, name number, vehicle or phone vibration, psychic number, and personal year cycles.",
+    url: "/tools",
+    type: "website",
+  },
+  twitter: {
+    title: "Free Numerology Calculators — Life Path, Name, Vehicle",
+    description: "Use free NumeroSoul numerology calculators for life path, name number, vehicle or phone vibration, psychic number, and personal year cycles.",
+  },
 };
 
 export default function ToolsPage() {

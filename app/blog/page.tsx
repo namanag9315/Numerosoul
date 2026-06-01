@@ -9,6 +9,19 @@ export const metadata: Metadata = {
   title: "Numerology Blog",
   description:
     "Read NumeroSoul numerology insights on life path numbers, baby names, vehicle numbers, master numbers, and personal year cycles.",
+  alternates: {
+    canonical: "/blog",
+  },
+  openGraph: {
+    title: "Numerology Blog",
+    description: "Read NumeroSoul numerology insights on life path numbers, baby names, vehicle numbers, master numbers, and personal year cycles.",
+    url: "/blog",
+    type: "website",
+  },
+  twitter: {
+    title: "Numerology Blog",
+    description: "Read NumeroSoul numerology insights on life path numbers, baby names, vehicle numbers, master numbers, and personal year cycles.",
+  },
 };
 
 export default function BlogPage() {

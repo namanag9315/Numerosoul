@@ -192,7 +192,20 @@ export async function POST(req: Request) {
     if (dobParts.length !== 3) {
       dobParts = clientDob.split('-');
     }
-    const day = parseInt(dobParts[0], 10);
+    
+    let day = 1;
+    if (dobParts.length === 3) {
+      if (dobParts[0].length === 4) {
+        // YYYY-MM-DD format
+        day = parseInt(dobParts[2], 10);
+      } else {
+        // DD/MM/YYYY format
+        day = parseInt(dobParts[0], 10);
+      }
+    } else {
+      day = parseInt(clientDob, 10) || 1; // Fallback
+    }
+    
     const psychicNumber = reduceNumber(day);
     
     const dobDigits = clientDob.replace(/\D/g, '');

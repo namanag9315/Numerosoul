@@ -7,7 +7,7 @@ import { StarField } from "@/components/effects/StarField";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Divider } from "@/components/ui/Divider";
 import { BLOG_POSTS, getBlogPost, getRelatedPosts } from "@/lib/blog";
-import { breadcrumbJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
 
 export function generateStaticParams() {
   return BLOG_POSTS.map((post) => ({ slug: post.slug }));
@@ -25,6 +25,21 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   return {
     title: post.title,
     description: post.excerpt,
+    alternates: {
+      canonical: `/blog/${post.slug}`,
+    },
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      url: `/blog/${post.slug}`,
+      type: "article",
+      publishedTime: post.publishedAt,
+      authors: [post.author],
+    },
+    twitter: {
+      title: post.title,
+      description: post.excerpt,
+    },
   };
 }
 
@@ -35,7 +50,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
     notFound();
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://numerasoul.in";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://numerosoul.in";
   const postUrl = `${siteUrl}/blog/${post.slug}`;
   const relatedPosts = getRelatedPosts(post.slug, post.category);
 
@@ -48,6 +63,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
           { name: post.title, path: `/blog/${post.slug}` },
         ])}
       />
+      <JsonLd data={articleJsonLd(post)} />
       <div className="relative selection:bg-[#E8A020]/20 selection:text-[#E8A020]">
       <section className="relative overflow-hidden px-6 pb-16 pt-32 sm:px-10 lg:px-16" style={{ background: 'radial-gradient(ellipse at 20% 50%, #FFF8EE 0%, #FAF3E0 50%, #F5EFE2 100%)' }}>
         {/* Animated stars */}

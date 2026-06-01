@@ -36,6 +36,7 @@ import {
 import { AdminChatbot } from "./AdminChatbot";
 import { AdvancedPremiumReportGenerator } from "./AdvancedPremiumReportGenerator";
 import { ChatMessage } from "@/components/ChatMessage";
+import { NameCorrectionTool } from "./NameCorrectionTool";
 
 interface Booking {
   id: string;
@@ -65,7 +66,7 @@ interface Booking {
 
 export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking[] }) {
   const [activeSubTab, setActiveSubTab] = useState<
-    "dob" | "name" | "loshu" | "vehicle" | "personal_year" | "chatbot" | "report"
+    "dob" | "name" | "loshu" | "vehicle" | "personal_year" | "chatbot" | "report" | "name_correction"
   >("dob");
 
   return (
@@ -125,6 +126,7 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
         {[
           { id: "dob", label: "DOB Combination", icon: CalendarDays },
           { id: "name", label: "Name Vibrations", icon: Sparkles },
+          { id: "name_correction", label: "Name Correction", icon: Sparkles },
           { id: "loshu", label: "Lo Shu Grid", icon: Grid },
           { id: "vehicle", label: "Vehicle Compatibility", icon: Car },
           { id: "personal_year", label: "Personal Year Theme", icon: Calendar },
@@ -136,7 +138,7 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveSubTab(tab.id as "dob" | "name" | "loshu" | "vehicle" | "personal_year" | "chatbot" | "report")}
+              onClick={() => setActiveSubTab(tab.id as "dob" | "name" | "name_correction" | "loshu" | "vehicle" | "personal_year" | "chatbot" | "report")}
               className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-bold transition-all duration-150 ${
                 active
                   ? "border-[#D4700A] text-slate-800"
@@ -157,6 +159,9 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
         </div>
         <div className={activeSubTab === "name" ? "block" : "hidden"}>
           <AdvancedNameNumberCalculator />
+        </div>
+        <div className={activeSubTab === "name_correction" ? "block" : "hidden"}>
+          <NameCorrectionTool />
         </div>
         <div className={activeSubTab === "loshu" ? "block" : "hidden"}>
           <AdvancedLoShuGridAnalyser />

@@ -31,6 +31,19 @@ export const metadata: Metadata = {
   title: "Complete Numerology Guide — Learn Everything",
   description:
     "Learn numerology systems, life path numbers, destiny numbers, soul urge, personality numbers, Lo Shu Grid, missing number remedies, personal year cycles, names, vehicle numbers, and compatibility.",
+  alternates: {
+    canonical: "/guide",
+  },
+  openGraph: {
+    title: "Complete Numerology Guide — Learn Everything",
+    description: "Learn numerology systems, life path numbers, destiny numbers, soul urge, personality numbers, Lo Shu Grid, missing number remedies, personal year cycles, names, vehicle numbers, and compatibility.",
+    url: "/guide",
+    type: "website",
+  },
+  twitter: {
+    title: "Complete Numerology Guide — Learn Everything",
+    description: "Learn numerology systems, life path numbers, destiny numbers, soul urge, personality numbers, Lo Shu Grid, missing number remedies, personal year cycles, names, vehicle numbers, and compatibility.",
+  },
 };
 
 const guideSections = [

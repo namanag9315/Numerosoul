@@ -8,6 +8,19 @@ export const metadata: Metadata = {
   title: "Book a Numerology Session",
   description:
     "Book a NumeroSoul numerology session online. Choose your service, date, time, consultation mode, and complete secure payment.",
+  alternates: {
+    canonical: "/book",
+  },
+  openGraph: {
+    title: "Book a Numerology Session",
+    description: "Book a NumeroSoul numerology session online. Choose your service, date, time, consultation mode, and complete secure payment.",
+    url: "/book",
+    type: "website",
+  },
+  twitter: {
+    title: "Book a Numerology Session",
+    description: "Book a NumeroSoul numerology session online. Choose your service, date, time, consultation mode, and complete secure payment.",
+  },
 };
 
 export default function BookPage() {

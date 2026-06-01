@@ -3,13 +3,26 @@ import Link from "next/link";
 import { Award, BookOpen, Grid3X3, Sparkles, MapPin } from "lucide-react";
 import { StarField } from "@/components/effects/StarField";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, personJsonLd } from "@/lib/seo";
 import { NumerologistPhoto } from "@/components/ui/NumerologistPhoto";
 
 export const metadata: Metadata = {
   title: "About Uma Rastogi — Certified Numerologist",
   description:
     "Learn about Uma Rastogi's background, qualifications, and certified expertise in Chaldean, Pythagorean, and Lo Shu Grid systems in Badaun, Uttar Pradesh, India.",
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    title: "About Uma Rastogi — Certified Numerologist",
+    description: "Learn about Uma Rastogi's background, qualifications, and certified expertise in Chaldean, Pythagorean, and Lo Shu Grid systems in Badaun, Uttar Pradesh, India.",
+    url: "/about",
+    type: "profile",
+  },
+  twitter: {
+    title: "About Uma Rastogi — Certified Numerologist",
+    description: "Learn about Uma Rastogi's background, qualifications, and certified expertise in Chaldean, Pythagorean, and Lo Shu Grid systems in Badaun, Uttar Pradesh, India.",
+  },
 };
 
 const approachCards = [
@@ -44,6 +57,7 @@ export default function AboutPage() {
   return (
     <>
       <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "About", path: "/about" }])} />
+      <JsonLd data={personJsonLd()} />
       <div className="relative selection:bg-[#E8A020]/20 selection:text-[#E8A020]">
         
         {/* Main Profile Columns */}

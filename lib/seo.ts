@@ -93,3 +93,73 @@ export function faqPageJsonLd(items: FaqItem[]) {
     })),
   };
 }
+
+export function personJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Uma Rastogi",
+    jobTitle: "Certified Numerologist, Vastu Consultant & Karmic Guide",
+    url: SITE_URL,
+    image: absoluteUrl("/og-image.jpg"),
+    sameAs: [
+      "https://wa.me/919193053666",
+      "https://instagram.com",
+      "https://youtube.com"
+    ],
+    description: "Certified numerologist specializing in Chaldean, Pythagorean, and Lo Shu Grid systems in Badaun, Uttar Pradesh, India.",
+  };
+}
+
+export function articleJsonLd(post: {
+  title: string;
+  excerpt: string;
+  slug: string;
+  author: string;
+  publishedAt: string;
+  category: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt,
+    url: absoluteUrl(`/blog/${post.slug}`),
+    author: {
+      "@type": "Person",
+      name: post.author,
+    },
+    datePublished: post.publishedAt,
+    dateModified: post.publishedAt,
+    publisher: {
+      "@type": "Organization",
+      name: "NumeroSoul",
+      logo: {
+        "@type": "ImageObject",
+        url: absoluteUrl("/favicon.ico")
+      }
+    },
+    articleSection: post.category,
+  };
+}
+
+export function serviceJsonLd(servicesList: Array<{ title: string; tagline: string; id: string }>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: servicesList.map((service, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Service",
+        name: service.title,
+        description: service.tagline,
+        provider: {
+          "@type": "LocalBusiness",
+          name: "NumeroSoul"
+        },
+        url: absoluteUrl(`/services#${service.id}`)
+      }
+    }))
+  };
+}
