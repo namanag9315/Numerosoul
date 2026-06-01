@@ -860,12 +860,10 @@ function AdvancedLoShuGridAnalyser() {
                 </span>
                 <p className="text-xs text-slate-600 mt-1">
                   Missing numbers preventing activation:{" "}
-                  {[
-                    ...new Set([
+                  {Array.from(new Set([
                       ...(result.advancedPlanes.find(p => p.name === 'Golden Yog')?.missingNumbers || []),
                       ...(result.advancedPlanes.find(p => p.name === 'Silver Yog')?.missingNumbers || [])
-                    ])
-                  ].join(", ")}
+                    ])).join(", ")}
                 </p>
               </div>
             )}
