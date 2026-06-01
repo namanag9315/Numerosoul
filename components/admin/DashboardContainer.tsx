@@ -29,6 +29,16 @@ import {
   FileText
 } from "lucide-react";
 
+const getAdminVideoLink = (url?: string | null) => {
+  if (!url) return "";
+  if (url.includes("/session/")) {
+    const roomId = url.split("/session/")[1];
+    const safeRoomId = roomId.replace(/[^a-zA-Z0-9-]/g, "");
+    return `https://meet.jit.si/NumeroSoul-Session-${safeRoomId}`;
+  }
+  return url;
+};
+
 type Booking = {
   id: string;
   booking_date: string;
@@ -753,7 +763,7 @@ export function DashboardContainer() {
                           )}
                           {b.video_conference_url && (
                             <a
-                              href={b.video_conference_url}
+                              href={getAdminVideoLink(b.video_conference_url)}
                               target="_blank"
                               rel="noreferrer"
                               className="mt-1 block truncate text-xs font-semibold text-[#D4700A]"
@@ -1336,7 +1346,7 @@ export function DashboardContainer() {
                   <div className="grid gap-3 border-t border-[#E8A020]/10 pt-2.5 sm:grid-cols-2">
                     {editingBooking.video_conference_url && (
                       <a
-                        href={editingBooking.video_conference_url}
+                        href={getAdminVideoLink(editingBooking.video_conference_url)}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1.5 truncate text-xs font-bold text-[#D4700A]"
