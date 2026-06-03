@@ -27,6 +27,68 @@ export function renderReportHTML(data: any) {
   const dc = getColor(data.destinyPlanet) || getColor(data.destinyNumber);
   const nc = data.overallRating;
 
+  let loshuGridHtml = '';
+  if (data.loShuGrid && data.loShuGrid.grid) {
+    const grid = data.loShuGrid.grid;
+    const stdNums = [[4, 9, 2], [3, 5, 7], [8, 1, 6]];
+    let gridCellsHtml = '';
+    
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        const repeats = grid[r][c];
+        const num = stdNums[r][c];
+        if (repeats > 0) {
+          gridCellsHtml += `<div class="loshu-cell present"><div class="loshu-cell-num">${num}</div><div class="loshu-cell-repeats">${repeats}x</div></div>`;
+        } else {
+          gridCellsHtml += `<div class="loshu-cell missing"><div class="loshu-cell-num">${num}</div></div>`;
+        }
+      }
+    }
+    
+    const activePlanes = (data.loShuGrid.planes || []).filter((p: any) => p.status === 'complete' || p.status === 'partial');
+    let planesHtml = '';
+    if (activePlanes.length > 0) {
+      planesHtml = activePlanes.map((p: any) => 
+        `<div class="loshu-plane">
+          <div class="loshu-plane-name">${p.name} (${p.status})</div>
+          <div class="loshu-plane-desc">${p.description}</div>
+        </div>`
+      ).join('');
+    } else {
+      planesHtml = `<div class="loshu-plane-desc" style="font-style:italic">No dominant planes found.</div>`;
+    }
+
+    loshuGridHtml = `
+    <div class="section-title">✦ Lo Shu Grid Analysis</div>
+    <div class="loshu-container">
+      <div class="loshu-grid-wrapper">
+        ${gridCellsHtml}
+      </div>
+      <div class="loshu-info">
+        <div class="loshu-info-title">Active Planes & Traits</div>
+        ${planesHtml}
+      </div>
+    </div>`;
+  }
+  
+  let loshuRemediesHtml = '';
+  if (data.loShuMissingRemedies && data.loShuMissingRemedies.length > 0) {
+    const remItems = data.loShuMissingRemedies.map((rem: any) => `
+      <div class="challenge-item">
+        <div class="challenge-label">Missing Number ${rem.number}: ${rem.impact}</div>
+        <div class="remedy-label">Recommended Remedy</div>
+        <div class="remedy-text">${rem.remedy}</div>
+      </div>
+    `).join('');
+    
+    loshuRemediesHtml = `
+      <div class="insight-block" style="margin-bottom:32px; padding-top:8px;">
+        <div class="insight-block-title" style="margin-top:16px;">Missing Numbers & Remedies</div>
+        ${remItems}
+      </div>
+    `;
+  }
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -133,6 +195,21 @@ export function renderReportHTML(data: any) {
   .name-series{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
   .series-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:13px;font-weight:600;}
   
+  /* LO SHU GRID */
+  .loshu-container{display:flex;gap:24px;margin-bottom:28px;background:#FFFFFF;border:1px solid rgba(201,151,58,.18);border-radius:12px;padding:24px;align-items:stretch;}
+  .loshu-grid-wrapper{flex-shrink:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:140px;height:140px;}
+  .loshu-cell{background:#FFFFFF;border:1px solid rgba(28,25,23,.08);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
+  .loshu-cell.present{background:rgba(201,151,58,.12);border-color:#E8A020;color:#D4700A;}
+  .loshu-cell.missing{color:rgba(28,25,23,.2);}
+  .loshu-cell-num{font-family:'Cinzel',serif;font-size:22px;font-weight:700;line-height:1;}
+  .loshu-cell-repeats{font-size:9px;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-top:4px;}
+  .loshu-info{flex:1;display:flex;flex-direction:column;justify-content:center;}
+  .loshu-info-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#C9973A;margin-bottom:12px;border-bottom:1px solid rgba(201,151,58,.15);padding-bottom:8px;}
+  .loshu-plane{margin-bottom:10px;}
+  .loshu-plane:last-child{margin-bottom:0;}
+  .loshu-plane-name{font-size:11px;font-weight:700;color:#1C1917;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+  .loshu-plane-desc{font-size:12px;color:rgba(28,25,23,.75);line-height:1.5;}
+  
   /* FOOTER */
   .footer{background:#1C1917;padding:24px 56px;display:flex;justify-content:space-between;align-items:center;}
   .footer-brand{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:#C9973A;}
@@ -238,6 +315,9 @@ export function renderReportHTML(data: any) {
   </div>
 
   <!-- COMBINATION SUMMARY -->
+  ${loshuGridHtml}
+  ${loshuRemediesHtml}
+
   <div class="section-title">✦ DOB Combination Reading</div>
   <div class="summary-block">
     <div class="summary-combo">${data.psychicNumber || '-'} — ${data.destinyNumber || '-'}</div>

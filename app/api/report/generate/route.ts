@@ -12,6 +12,7 @@ import {
   getRulingPlanet,
   getMissingNumberContent,
 } from '@/lib/numerologyData';
+import { calculateLoShuGrid } from '@/lib/numerology';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -101,7 +102,10 @@ OUTPUT FORMAT — return exactly this JSON structure:
     "health": number,
     "relationships": number,
     "career": number
-  }
+  },
+  "loShuMissingRemedies": [
+    { "number": number, "impact": "string", "remedy": "string" }
+  ]
 }`;
 
 function calculateMissingNumbers(dob: string): number[] {
@@ -334,6 +338,9 @@ export async function POST(req: Request) {
     reportData.luckyElements.friends = compatData.friends;
     reportData.luckyElements.neutral = compatData.neutral;
     reportData.luckyElements.enemies = compatData.enemies;
+
+    // Attach deterministic Lo Shu Grid
+    reportData.loShuGrid = calculateLoShuGrid(clientDob);
 
     // Sanitize output: remove any prompt leak phrases
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
