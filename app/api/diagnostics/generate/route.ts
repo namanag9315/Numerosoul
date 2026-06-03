@@ -10,7 +10,7 @@ let cachedDb: any = null;
 function getKnowledgeBase() {
   if (cachedDb) return cachedDb;
   try {
-    const dbPath = path.join(process.cwd(), 'data', 'extended_numerology_db.json');
+    const dbPath = path.join(process.cwd(), 'data', 'chaldean_numerology_knowledge_base.json');
     cachedDb = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
   } catch (err) {
     console.error("Failed to load knowledge base", err);
@@ -29,8 +29,8 @@ export async function POST(req: Request) {
 
     if (section === 'dob') {
       const { psychic, destiny } = parameters;
-      const pContext = KNOWLEDGE_BASE?.core_numbers?.[String(psychic)] || {};
-      const dContext = KNOWLEDGE_BASE?.core_numbers?.[String(destiny)] || {};
+      const pContext = KNOWLEDGE_BASE?.structured_knowledge?.psychic_numbers?.[String(psychic)] || {};
+      const dContext = KNOWLEDGE_BASE?.structured_knowledge?.destiny_numbers?.[String(destiny)] || {};
       relevantContext = JSON.stringify({ psychic_number_data: pContext, destiny_number_data: dContext }, null, 2);
       
       userPrompt = `Write a comprehensive deep dive report for Psychic Number ${psychic} and Destiny Number ${destiny}.
@@ -85,7 +85,7 @@ MUST USE THIS EXACT MARKDOWN STRUCTURE:
 - **[Friction]:** [One sentence explanation of where they conflict]`;
     } else if (section === 'name') {
       const { name, compound, single, dob, psychic, destiny } = parameters;
-      relevantContext = JSON.stringify(KNOWLEDGE_BASE?.additional_topics?.name_correction_rules || {}, null, 2);
+      relevantContext = JSON.stringify(KNOWLEDGE_BASE?.structured_knowledge?.name_correction_rules || {}, null, 2);
       
       let dobContext = "";
       let dobPromptSection = "";
@@ -155,8 +155,8 @@ ${dobPromptSection}
       const { present, missing } = parameters;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const missingContexts = missing.reduce((acc: any, m: number) => {
-        if (KNOWLEDGE_BASE?.missing_numbers?.[String(m)]) {
-           acc[String(m)] = KNOWLEDGE_BASE.missing_numbers[String(m)];
+        if (KNOWLEDGE_BASE?.structured_knowledge?.missing_numbers?.[String(m)]) {
+           acc[String(m)] = KNOWLEDGE_BASE.structured_knowledge.missing_numbers[String(m)];
         }
         return acc;
       }, {});
@@ -188,7 +188,7 @@ MUST USE THIS EXACT MARKDOWN STRUCTURE:
     } else if (section === 'vehicle') {
       const { regNumber, compound, vibration, ownerLifePath } = parameters;
       // We don't have a specific vehicle knowledge file, so we just pass general context for the vibration number
-      relevantContext = JSON.stringify(KNOWLEDGE_BASE?.core_numbers?.[String(vibration)] || {}, null, 2);
+      relevantContext = JSON.stringify(KNOWLEDGE_BASE?.structured_knowledge?.psychic_numbers?.[String(vibration)] || {}, null, 2);
       
       userPrompt = `Write a comprehensive deep dive report for Vehicle Registration Number: ${regNumber}
 Compound Number: ${compound}
@@ -230,7 +230,7 @@ MUST USE THIS EXACT MARKDOWN STRUCTURE:
 - **[Advice]:** [What to keep inside for positivity]`;
     } else if (section === 'personal_year') {
       const { targetYear, personalYear, universalYear, theme } = parameters;
-      relevantContext = JSON.stringify(KNOWLEDGE_BASE?.additional_topics?.personal_year || {}, null, 2);
+      relevantContext = JSON.stringify(KNOWLEDGE_BASE?.structured_knowledge?.personal_years || {}, null, 2);
       
       userPrompt = `Write a comprehensive deep dive report for Personal Year ${personalYear}.
 Target Year: ${targetYear}
@@ -277,7 +277,7 @@ MUST USE THIS EXACT MARKDOWN STRUCTURE:
 - **Health:** [Specific advice]`;
     }
 
-    const systemPrompt = `You are a master Chaldean Numerologist. Use ONLY the following Knowledge Base context to generate your reading. Do not use outside knowledge. Do not apologize or mention that you are an AI. 
+    const systemPrompt = `You are a master Chaldean Numerologist. Use ONLY the following Knowledge Base context to generate your reading. Do not use outside generic numerology knowledge. Do not apologize or mention that you are an AI. If the guide says a formula or data is missing, state it is not found.
 
 CRITICAL FORMATTING RULES — violating these is not allowed:
 1. NEVER write plain paragraphs. Every piece of information must be in a bullet point with a bold label.

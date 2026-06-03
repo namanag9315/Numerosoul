@@ -3,10 +3,10 @@ import fs from 'fs';
 import path from 'path';
 
 let cachedDb: any = null;
-function getDb(): any {
+export function getKnowledgeBase(): any {
   if (cachedDb) return cachedDb;
   try {
-    const dbPath = path.join(process.cwd(), 'data', 'extended_numerology_db.json');
+    const dbPath = path.join(process.cwd(), 'data', 'chaldean_numerology_knowledge_base.json');
     cachedDb = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
   } catch (err) {
     console.error('Failed to load numerology DB', err);
@@ -20,43 +20,51 @@ function toBase(num: number): number {
 }
 
 export function getPsychicContent(num: number): string {
-  const db = getDb();
+  const db = getKnowledgeBase();
   if (num === 11 || num === 22 || num === 33) {
-    return db?.additional_topics?.master_number?.[String(num)] ?? '';
+    const meaning = db?.structured_knowledge?.master_numbers?.numbers?.[String(num)]?.meaning;
+    return Array.isArray(meaning) ? meaning.join(' ') : meaning ?? '';
   }
-  return db?.core_numbers?.[String(num)]?.psychic_meaning ?? '';
+  const content = db?.structured_knowledge?.psychic_numbers?.[String(num)]?.core_interpretation;
+  return Array.isArray(content) ? content.join(' ') : content ?? '';
 }
 
 export function getDestinyContent(num: number): string {
-  const db = getDb();
+  const db = getKnowledgeBase();
   if (num === 11 || num === 22 || num === 33) {
-    return db?.additional_topics?.master_number?.[String(num)] ?? '';
+    const meaning = db?.structured_knowledge?.master_numbers?.numbers?.[String(num)]?.meaning;
+    return Array.isArray(meaning) ? meaning.join(' ') : meaning ?? '';
   }
-  return db?.core_numbers?.[String(num)]?.destiny_meaning ?? '';
+  const content = db?.structured_knowledge?.destiny_numbers?.[String(num)]?.core_interpretation;
+  return Array.isArray(content) ? content.join(' ') : content ?? '';
 }
 
 export function getSoulUrgeContent(num: number): string {
-  const db = getDb();
+  const db = getKnowledgeBase();
   const base = toBase(num);
-  return db?.additional_topics?.soul_urge_number?.[String(base)] ?? '';
+  const meaning = db?.structured_knowledge?.soul_urge_numbers?.[String(base)]?.meaning;
+  return Array.isArray(meaning) ? meaning.join(' ') : meaning ?? '';
 }
 
 export function getLuckyColor(num: number): string {
-  const db = getDb();
+  const db = getKnowledgeBase();
   const base = toBase(num);
-  return db?.additional_topics?.lucky_colors?.[String(base)] ?? '';
+  const colors = db?.structured_knowledge?.psychic_numbers?.[String(base)]?.lucky_colors;
+  return Array.isArray(colors) ? colors.join(', ') : colors ?? '';
 }
 
 export function getFavorablePeriod(num: number): string {
-  const db = getDb();
+  const db = getKnowledgeBase();
   const base = toBase(num);
-  return db?.additional_topics?.favorable_periods?.[String(base)] ?? '';
+  const periods = db?.structured_knowledge?.psychic_numbers?.[String(base)]?.favorable_periods;
+  return Array.isArray(periods) ? periods.join(', ') : periods ?? '';
 }
 
 export function getUnfavorablePeriod(num: number): string {
-  const db = getDb();
+  const db = getKnowledgeBase();
   const base = toBase(num);
-  return db?.additional_topics?.unfavorable_periods?.[String(base)] ?? '';
+  const periods = db?.structured_knowledge?.psychic_numbers?.[String(base)]?.unfavorable_periods;
+  return Array.isArray(periods) ? periods.join(', ') : periods ?? '';
 }
 
 export function getCompatibility(num: number): {
@@ -64,34 +72,38 @@ export function getCompatibility(num: number): {
   neutral: string;
   enemies: string;
 } {
-  const db = getDb();
+  const db = getKnowledgeBase();
   const base = toBase(num);
-  const compat = db?.tables?.combinations_and_compatibility?.number_relationship_chart?.[String(base)];
+  const chartArray = db?.structured_knowledge?.number_relationship_chart || [];
+  const compat = chartArray.find((c: any) => c.number === String(base));
+  
   return {
-    friends: compat?.friends ?? '',
-    neutral: compat?.neutral ?? '',
-    enemies: compat?.enemies ?? '',
+    friends: Array.isArray(compat?.friends) ? compat.friends.join(', ') : compat?.friends ?? '',
+    neutral: Array.isArray(compat?.neutral) ? compat.neutral.join(', ') : compat?.neutral ?? '',
+    enemies: Array.isArray(compat?.enemies) ? compat.enemies.join(', ') : compat?.enemies ?? '',
   };
 }
 
 export function getRulingPlanet(num: number): string {
-  const db = getDb();
+  const db = getKnowledgeBase();
   if (num === 11 || num === 22 || num === 33) {
     const base = toBase(num);
-    const basePlanet = db?.core_numbers?.[String(base)]?.ruling_planet ?? '';
+    const basePlanet = db?.structured_knowledge?.psychic_numbers?.[String(base)]?.ruling_planet ?? '';
     return basePlanet ? basePlanet + ' (Master)' : '';
   }
-  return db?.core_numbers?.[String(num)]?.ruling_planet ?? '';
+  return db?.structured_knowledge?.psychic_numbers?.[String(num)]?.ruling_planet ?? '';
 }
 
 export function getMissingNumberContent(num: number): string {
-  const db = getDb();
-  return db?.missing_numbers?.[String(num)] ?? '';
+  const db = getKnowledgeBase();
+  const meaning = db?.structured_knowledge?.missing_numbers?.[String(num)]?.meaning;
+  return Array.isArray(meaning) ? meaning.join(' ') : meaning ?? '';
 }
 
 export function getCareerGuidance(): string {
-  const db = getDb();
-  return db?.additional_topics?.career_guidance?.numerology ?? '';
+  const db = getKnowledgeBase();
+  const note = db?.structured_knowledge?.career_guidance?.basis_note ?? '';
+  return note;
 }
 
 export function buildFullKnowledgeContext(
