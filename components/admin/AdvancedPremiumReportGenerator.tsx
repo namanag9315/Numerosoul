@@ -63,9 +63,29 @@ export function AdvancedPremiumReportGenerator() {
 
   const downloadReportPDF = () => {
     if (!reportHTML) return;
-    const printWindow = window.open("", "_blank");
+    const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(reportHTML);
+      // Inject CSS to suppress browser print headers/footers
+      const htmlWithPrintFix = reportHTML.replace(
+        '</head>',
+        `<style>
+          @media print {
+            @page {
+              margin: 0 !important;
+              size: A4;
+            }
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          }
+          @page {
+            margin: 0 !important;
+          }
+        </style>
+        </head>`
+      );
+      printWindow.document.write(htmlWithPrintFix);
       printWindow.document.close();
       printWindow.onload = () => {
         printWindow.print();

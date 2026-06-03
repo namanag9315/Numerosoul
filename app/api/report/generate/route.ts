@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
-import fs from 'fs';
-import path from 'path';
+import {
+  buildFullKnowledgeContext,
+  getPsychicContent,
+  getDestinyContent,
+  getSoulUrgeContent,
+  getLuckyColor,
+  getFavorablePeriod,
+  getUnfavorablePeriod,
+  getCompatibility,
+  getRulingPlanet,
+  getMissingNumberContent,
+} from '@/lib/numerologyData';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -27,6 +37,23 @@ RULES:
 6. Master numbers (11, 22, 33) → always use the master_number section content, not the base number
 7. Soul urge → always include with content from the soul_urge_number section
 8. Do NOT invent traits or periods not in the guide
+9. Natural Gifts → extract MINIMUM 4 gifts from BOTH Psychic and Destiny guide content
+10. Missing Numbers → for each missing number, write what area of life is affected and the specific remedy from the guide
+
+CRITICAL: Never include these phrases in your response:
+- "the guide does not provide"
+- "not explicitly stated in the guide"
+- "we cannot provide specific insights"
+- "service_specific_topics"
+- "section is empty"
+- "according to the guide"
+- "the guide says"
+- "not available in guide"
+- "not available"
+- "Since the X section is empty"
+- "we will focus on the general aspects"
+
+If you have the content (which is provided above), USE IT. Never admit inability — you have everything needed.
 
 OUTPUT FORMAT — return exactly this JSON structure:
 {
@@ -39,8 +66,8 @@ OUTPUT FORMAT — return exactly this JSON structure:
   "destinyPlanet": "string",
   "combinationNature": "string (e.g. Favourable / Challenging / Strong)",
   "executiveSummary": "string (3-4 sentences)",
-  "corePersonality": "string (2-3 paragraphs, specific to Psychic number)",
-  "soulUrgeMeaning": "string (bullet points from guide)",
+  "corePersonality": "string (2-3 paragraphs, specific to Psychic number, with 4-5 bold bullet traits)",
+  "soulUrgeMeaning": "string (bullet points from guide content)",
   "naturalGifts": [
     {"title": "string", "description": "string"}
   ],
@@ -51,7 +78,7 @@ OUTPUT FORMAT — return exactly this JSON structure:
   "serviceSpecificInsight": {
     "serviceType": "string",
     "heading": "string",
-    "content": "string (Use service_specific_topics data if provided, else use general data)"
+    "content": "string"
   },
   "healthFocus": "string",
   "luckyElements": {
@@ -77,79 +104,6 @@ OUTPUT FORMAT — return exactly this JSON structure:
   }
 }`;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let cachedDb: any = null;
-function getKnowledgeBase() {
-  if (cachedDb) return cachedDb;
-  try {
-    const dbPath = path.join(process.cwd(), 'data', 'extended_numerology_db.json');
-    cachedDb = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-  } catch (err) {
-    console.error("Failed to load knowledge base", err);
-    cachedDb = {};
-  }
-  return cachedDb;
-}
-
-function getCompatibleNumbers(psychicNum: number): { friends: string; neutral: string; enemies: string } {
-  const db = getKnowledgeBase();
-  const compat = db.number_compatibility || {};
-  const base = String(psychicNum === 11 ? 2 : psychicNum === 22 ? 4 : psychicNum === 33 ? 6 : psychicNum);
-  return {
-    friends: compat[base]?.friends ?? "",
-    neutral: compat[base]?.neutral ?? "",
-    enemies: compat[base]?.enemies ?? ""
-  };
-}
-
-function getNumberKnowledge(psychicNum: number, destinyNum: number): string {
-  const db = getKnowledgeBase();
-  const coreDb = db.core_numbers || {};
-  const masterNums = db.master_number || {};
-  
-  let psychicContent = "";
-  let destinyContent = "";
-  
-  if (psychicNum === 11 || psychicNum === 22 || psychicNum === 33) {
-    psychicContent = masterNums[String(psychicNum)] ?? "";
-  } else {
-    psychicContent = coreDb[String(psychicNum)]?.psychic_meaning ?? "";
-  }
-  
-  if (destinyNum === 11 || destinyNum === 22 || destinyNum === 33) {
-    destinyContent = masterNums[String(destinyNum)] ?? "";
-  } else {
-    destinyContent = coreDb[String(destinyNum)]?.destiny_meaning ?? "";
-  }
-  
-  const luckyColors = db.lucky_colors || {};
-  const unfavorable = db.unfavorable_periods || {};
-  const favorable = db.favorable_periods || {};
-  
-  const psychicBase = psychicNum === 11 ? 2 : psychicNum === 22 ? 4 : psychicNum === 33 ? 6 : psychicNum;
-  const destinyBase = destinyNum === 11 ? 2 : destinyNum === 22 ? 4 : destinyNum === 33 ? 6 : destinyNum;
-  
-  return `
-PSYCHIC NUMBER ${psychicNum} KNOWLEDGE (from guide):
-${psychicContent}
-
-DESTINY NUMBER ${destinyNum} KNOWLEDGE (from guide):
-${destinyContent}
-
-LUCKY COLORS (from guide):
-- Primary lucky color (Psychic ${psychicNum}): ${luckyColors[String(psychicBase)] ?? ""}
-- Secondary lucky color (Destiny ${destinyNum}): ${luckyColors[String(destinyBase)] ?? ""}
-
-UNFAVORABLE PERIODS (from guide):
-- For Psychic ${psychicNum}: ${unfavorable[String(psychicBase)] ?? ""}
-- For Destiny ${destinyNum}: ${unfavorable[String(destinyBase)] ?? ""}
-
-FAVORABLE PERIODS (from guide):
-- For Psychic ${psychicNum}: ${favorable[String(psychicBase)] ?? ""}
-- For Destiny ${destinyNum}: ${favorable[String(destinyBase)] ?? ""}
-  `;
-}
-
 function calculateMissingNumbers(dob: string): number[] {
   const digits = dob.replace(/\D/g, '').split('').map(d => parseInt(d, 10));
   const missing: number[] = [];
@@ -160,71 +114,45 @@ function calculateMissingNumbers(dob: string): number[] {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getAdditionalTopics(serviceName: string, KNOWLEDGE_BASE: any): Record<string, any> {
-  if (!KNOWLEDGE_BASE?.additional_topics) return {};
-  const s = serviceName.toLowerCase();
-  const keys: string[] = [];
-  
-  // Name Services
-  if (s.includes('name')) {
-    keys.push('name_correction_rules', 'name_analysis_grid', 'first_letter_of_name');
-  }
-  // Career Services
-  if (s.includes('career') || s.includes('job') || s.includes('work') || s.includes('business')) {
-    keys.push('career_guidance', 'success_number');
-  }
-  // Relationships & Marriage
-  if (s.includes('marriage') || s.includes('relationship') || s.includes('love') || s.includes('partner') || s.includes('compatibility')) {
-    keys.push('marriage_year_chart', 'marriage_compatibility_chart');
-  }
-  // Predictions & Forecasts
-  if (s.includes('year') || s.includes('forecast') || s.includes('future') || s.includes('period') || s.includes('prediction')) {
-    keys.push('personal_year', 'personal_month', 'personal_day', 'favorable_periods', 'unfavorable_periods');
-  }
-  // Remedies & Grid Analysis
-  if (s.includes('remed') || s.includes('grid') || s.includes('missing') || s.includes('kua') || s.includes('color')) {
-    keys.push('missing_plane', 'repeating_numbers', 'anti_number_remedies', 'yantra_remedies', 'kua_number_direction_chart', 'kua_number_directional_remedies', 'angel_numbers', 'lucky_colors');
-  }
-  // Core Numbers & Life Path Services
-  if (s.includes('life path') || s.includes('core') || s.includes('karmic') || s.includes('master') || s.includes('soul') || s.includes('personality')) {
-    keys.push('master_number', 'soul_urge_number', 'personality_number', 'maturity_number', 'karmic_debt_number', 'success_number', 'challenge_number');
-  }
-  
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result: Record<string, any> = {};
-  for (const k of keys) {
-    if (KNOWLEDGE_BASE.additional_topics[k]) {
-      result[k] = KNOWLEDGE_BASE.additional_topics[k];
-    }
-  }
-  return result;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildSmartPrompt(clientData: any, additionalInstructions = '') {
-  const KNOWLEDGE_BASE = getKnowledgeBase();
+  const psychicNum = clientData.psychicNumber;
+  const destinyNum = clientData.destinyNumber;
+  const soulUrgeNum = clientData.soulUrgeNumber;
+  const psychicBase = psychicNum === 11 ? 2 : psychicNum === 22 ? 4 : psychicNum === 33 ? 6 : psychicNum;
+  const destinyBase = destinyNum === 11 ? 2 : destinyNum === 22 ? 4 : destinyNum === 33 ? 6 : destinyNum;
 
+  // Build knowledge context from the JSON data extractor
+  const fullKnowledge = buildFullKnowledgeContext(psychicNum, destinyNum, soulUrgeNum);
+
+  // Get specific extracted content for direct injection
+  const psychicContent = getPsychicContent(psychicNum);
+  const destinyContent = getDestinyContent(destinyNum);
+  const soulUrgeContent = getSoulUrgeContent(soulUrgeNum);
+  const primaryColor = getLuckyColor(psychicNum);
+  const secondaryColor = getLuckyColor(destinyNum);
+  const compat = getCompatibility(psychicNum);
+  const favPsychic = getFavorablePeriod(psychicNum);
+  const favDestiny = getFavorablePeriod(destinyNum);
+  const unfavPsychic = getUnfavorablePeriod(psychicNum);
+  const unfavDestiny = getUnfavorablePeriod(destinyNum);
+  const psychicPlanet = getRulingPlanet(psychicNum);
+  const destinyPlanet = getRulingPlanet(destinyNum);
+
+  // Missing numbers with remedies from JSON
   const missingNums = calculateMissingNumbers(clientData.dob);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const missingRules = missingNums.reduce((acc: any, num: number) => {
-    if (KNOWLEDGE_BASE?.missing_numbers?.[String(num)]) {
-      acc[String(num)] = KNOWLEDGE_BASE.missing_numbers[String(num)];
-    }
-    return acc;
-  }, {});
-
-  const additionalTopics = getAdditionalTopics(clientData.service, KNOWLEDGE_BASE);
-
-  const soulUrgeContent = KNOWLEDGE_BASE?.soul_urge_number?.[String(clientData.soulUrgeNumber)] || "";
-  const psychicBase = clientData.psychicNumber === 11 ? 2 : clientData.psychicNumber === 22 ? 4 : clientData.psychicNumber === 33 ? 6 : clientData.psychicNumber;
-  const destinyBase = clientData.destinyNumber === 11 ? 2 : clientData.destinyNumber === 22 ? 4 : clientData.destinyNumber === 33 ? 6 : clientData.destinyNumber;
+  const missingContent = missingNums.map(n => {
+    const content = getMissingNumberContent(n);
+    return `Missing Number ${n}: ${content || 'Focus on developing qualities of this number.'}`;
+  }).join('\n');
 
   return `
 CLIENT DETAILS:
 - Name: ${clientData.name}
-- Psychic Number: ${clientData.psychicNumber} (Base Number: ${psychicBase}, calculated from day ${clientData.dayOfBirth})
-- Destiny Number: ${clientData.destinyNumber} (Base Number: ${destinyBase}, calculated from full DOB ${clientData.dob})
-- Soul Urge Number: ${clientData.soulUrgeNumber} (vowels)
+- Psychic Number: ${psychicNum} (Base Number: ${psychicBase}, calculated from day ${clientData.dayOfBirth})
+- Destiny Number: ${destinyNum} (Base Number: ${destinyBase}, calculated from full DOB ${clientData.dob})
+- Psychic Ruling Planet: ${psychicPlanet}
+- Destiny Ruling Planet: ${destinyPlanet}
+- Soul Urge Number: ${soulUrgeNum} (vowels)
 - Missing Numbers (1-9): ${missingNums.join(', ') || 'None'}
 - Name Number: ${clientData.nameNumber} (Chaldean)
 - Service: ${clientData.service}
@@ -232,23 +160,58 @@ CLIENT DETAILS:
 ${additionalInstructions ? `\nUMA'S SPECIFIC ADDITIONS:\n${additionalInstructions}` : ''}
 
 ### AUTHORITATIVE CHALDEAN KNOWLEDGE BASE ###
-${getNumberKnowledge(clientData.psychicNumber, clientData.destinyNumber)}
+${fullKnowledge}
 
-SOUL URGE ${clientData.soulUrgeNumber} KNOWLEDGE:
-${soulUrgeContent}
+=== GUIDE CONTENT FOR PSYCHIC ${psychicNum} ===
+"${psychicContent}"
 
-COMPATIBLE NUMBERS:
-${JSON.stringify(getCompatibleNumbers(clientData.psychicNumber), null, 2)}
+=== GUIDE CONTENT FOR DESTINY ${destinyNum} ===
+"${destinyContent}"
 
-ADDITIONAL DATA:
-${JSON.stringify({ missing_numbers_rules: missingRules, service_specific_topics: additionalTopics }, null, 2)}
+=== GUIDE CONTENT FOR SOUL URGE ${soulUrgeNum} ===
+"${soulUrgeContent}"
+
+=== PRIMARY LUCKY COLOR (from guide for number ${psychicNum}) ===
+"${primaryColor}"
+
+=== SECONDARY LUCKY COLOR (from guide for number ${destinyNum}) ===
+"${secondaryColor}"
+
+=== COMPATIBLE NUMBERS (from guide) ===
+- Friends (compatible): ${compat.friends}
+- Neutral: ${compat.neutral}
+- Caution with: ${compat.enemies}
+
+=== FAVORABLE PERIODS ===
+For Psychic ${psychicNum}: "${favPsychic}"
+For Destiny ${destinyNum}: "${favDestiny}"
+
+=== UNFAVORABLE PERIODS ===
+For Psychic ${psychicNum}: "${unfavPsychic}"
+For Destiny ${destinyNum}: "${unfavDestiny}"
+
+=== MISSING NUMBERS WITH REMEDIES FROM GUIDE ===
+${missingContent}
+
 ### END OF KNOWLEDGE BASE ###
 
 TASK:
-Using ONLY the reference data above as your knowledge source, generate a deeply personalised report for ${clientData.name}. 
+Using ONLY the reference data above as your knowledge source, generate a deeply personalised report for ${clientData.name}.
+
+For Natural Gifts: Extract MINIMUM 4-5 gifts from BOTH the Psychic ${psychicNum} guide content AND the Destiny ${destinyNum} guide content provided above. Each gift must have a title and 2-sentence explanation.
+
+For Core Personality: Write 4-5 key traits as **Bold Label:** explanation, extracted from the Psychic guide content.
+
+For Soul Urge: Rewrite the soul urge content as bullet points. Do NOT say "not available".
+
+For Lucky Elements: Use the exact colors, periods, and compatibility data injected above.
+
+For Timing & Periods: Combine both numbers' guidance into clear favorable and unfavorable sections with exact months.
+
+For Missing Numbers: Group them by plane and provide specific remedies from the guide content.
+
 Every insight must reference their specific numbers — nothing generic.
 Write in Uma Rastogi's warm, wise, personal voice.
-The service booked is "${clientData.service}" — make the service section extremely relevant by using the "service_specific_topics" provided. If missing numbers exist, mention remedies for them.
 Return valid JSON matching the specified output format.`;
 }
 
@@ -264,7 +227,7 @@ export async function POST(req: Request) {
     const { clientName, clientDob, serviceName, customInstructions } = await req.json();
 
     if (!clientName || !clientDob) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // Calculate numbers correctly before sending to Groq
@@ -272,7 +235,7 @@ export async function POST(req: Request) {
     if (dobParts.length !== 3) {
       dobParts = clientDob.split('-');
     }
-    
+
     let day = 1;
     if (dobParts.length === 3) {
       if (dobParts[0].length === 4) {
@@ -283,33 +246,36 @@ export async function POST(req: Request) {
         day = parseInt(dobParts[0], 10);
       }
     } else {
-      day = parseInt(clientDob, 10) || 1; // Fallback
+      day = parseInt(clientDob, 10) || 1;
     }
-    
+
     const psychicNumber = reduceNumber(day);
-    
+
     const dobDigits = clientDob.replace(/\D/g, '');
     const dobSum = dobDigits.split('').reduce((a: number, d: string) => a + parseInt(d, 10), 0);
     const destinyNumber = reduceNumber(dobSum);
-    
+
     // Calculate name number (Chaldean)
     const CHALDEAN: Record<string, number> = {
-      A:1,I:1,J:1,Q:1,Y:1,B:2,K:2,R:2,C:3,G:3,L:3,S:3,
-      D:4,M:4,T:4,H:5,E:5,N:5,X:5,U:6,V:6,W:6,O:7,Z:7,F:8,P:8
+      A: 1, I: 1, J: 1, Q: 1, Y: 1, B: 2, K: 2, R: 2, C: 3, G: 3, L: 3, S: 3,
+      D: 4, M: 4, T: 4, H: 5, E: 5, N: 5, X: 5, U: 6, V: 6, W: 6, O: 7, Z: 7, F: 8, P: 8,
     };
-    const nameClean = clientName.toUpperCase().replace(/[^A-Z]/g,'');
+    const nameClean = clientName.toUpperCase().replace(/[^A-Z]/g, '');
     const nameSum = nameClean.split('').reduce((a: number, c: string) => a + (CHALDEAN[c] || 0), 0);
     const nameNumber = reduceNumber(nameSum);
 
-    const VOWELS = new Set(["A", "E", "I", "O", "U"]);
-    const soulUrgeSum = nameClean.split('').filter((c: string) => VOWELS.has(c)).reduce((a: number, c: string) => a + (CHALDEAN[c] || 0), 0);
+    const VOWELS = new Set(['A', 'E', 'I', 'O', 'U']);
+    const soulUrgeSum = nameClean
+      .split('')
+      .filter((c: string) => VOWELS.has(c))
+      .reduce((a: number, c: string) => a + (CHALDEAN[c] || 0), 0);
     const soulUrgeNumber = reduceNumber(soulUrgeSum);
-    
+
     const enrichedData = {
       name: clientName,
       dob: clientDob,
-      service: serviceName || "Numerology Consultation",
-      focusArea: "general life guidance",
+      service: serviceName || 'Numerology Consultation',
+      focusArea: 'general life guidance',
       dayOfBirth: day,
       psychicNumber,
       destinyNumber,
@@ -320,16 +286,16 @@ export async function POST(req: Request) {
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       temperature: 0.7,
-      max_tokens: 3000,
+      max_tokens: 4000,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: buildSmartPrompt(enrichedData, customInstructions) }
+        { role: 'user', content: buildSmartPrompt(enrichedData, customInstructions) },
       ],
       response_format: { type: 'json_object' },
     });
 
-    const rawContent = completion.choices[0]?.message?.content || "";
-    
+    const rawContent = completion.choices[0]?.message?.content || '';
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let reportData: any;
     try {
@@ -342,24 +308,61 @@ export async function POST(req: Request) {
         throw new Error('Failed to parse report JSON');
       }
     }
-    
-    // Explicitly enforce psychicPlanet and destinyPlanet from CHALDEAN_RULING_PLANETS
-    const { CHALDEAN_RULING_PLANETS, LUCKY_DAYS } = await import('@/lib/numerologyEngine');
-    const exactPsychicPlanet = CHALDEAN_RULING_PLANETS[psychicNumber];
+
+    // Enforce correct planets from our data extractor
+    const exactPsychicPlanet = getRulingPlanet(psychicNumber);
     if (exactPsychicPlanet) {
       reportData.psychicPlanet = exactPsychicPlanet;
     }
-    const exactDestinyPlanet = CHALDEAN_RULING_PLANETS[destinyNumber];
+    const exactDestinyPlanet = getRulingPlanet(destinyNumber);
     if (exactDestinyPlanet) {
       reportData.destinyPlanet = exactDestinyPlanet;
     }
-    
+
+    // Enforce lucky days from engine
+    const { LUCKY_DAYS } = await import('@/lib/numerologyEngine');
+    if (!reportData.luckyElements) reportData.luckyElements = {};
     if (!reportData.luckyElements.days) reportData.luckyElements.days = [];
-    reportData.luckyElements.days.push(LUCKY_DAYS[psychicNumber] || "");
+    reportData.luckyElements.days = [LUCKY_DAYS[psychicNumber] || ''].filter(Boolean);
     if (psychicNumber !== destinyNumber) {
-      reportData.luckyElements.days.push(LUCKY_DAYS[destinyNumber] || "");
+      const destDay = LUCKY_DAYS[destinyNumber] || '';
+      if (destDay) reportData.luckyElements.days.push(destDay);
     }
-    reportData.luckyElements.days = reportData.luckyElements.days.filter(Boolean);
+
+    // Enforce compatibility from JSON
+    const compatData = getCompatibility(psychicNumber);
+    reportData.luckyElements.friends = compatData.friends;
+    reportData.luckyElements.neutral = compatData.neutral;
+    reportData.luckyElements.enemies = compatData.enemies;
+
+    // Sanitize output: remove any prompt leak phrases
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sanitize = (obj: any): any => {
+      if (typeof obj === 'string') {
+        return obj
+          .replace(/Since the [\w\s]+ section is empty[^.]*\./gi, '')
+          .replace(/service_specific_topics/gi, '')
+          .replace(/the guide does not provide[^.]*\./gi, '')
+          .replace(/not explicitly stated in the guide[^.]*\./gi, '')
+          .replace(/not available in guide[^.]*\./gi, '')
+          .replace(/we cannot provide specific insights[^.]*\./gi, '')
+          .replace(/according to the guide,?/gi, '')
+          .replace(/the guide says,?/gi, '')
+          .trim();
+      }
+      if (Array.isArray(obj)) return obj.map(sanitize);
+      if (obj && typeof obj === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result: any = {};
+        for (const [k, v] of Object.entries(obj)) {
+          result[k] = sanitize(v);
+        }
+        return result;
+      }
+      return obj;
+    };
+
+    reportData = sanitize(reportData);
 
     return NextResponse.json({ reportData });
   } catch (error) {

@@ -139,7 +139,15 @@ export function renderReportHTML(data: any) {
   .footer-note{font-size:10px;color:rgba(250,243,224,.3);text-align:right;max-width:300px;line-height:1.6;}
   .bottom-stripe{height:4px;background:linear-gradient(90deg,#C9973A,#E8A020,#F5C842,#C9973A);}
   
-  @media print{body{background:#fff;} .header,.uma-section,.summary-block,.client-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+  @media print {
+    @page { margin: 0 !important; size: A4; }
+    body { background: #fff; margin: 0; padding: 0; }
+    .header,.uma-section,.summary-block,.client-banner {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+  @page { margin: 0 !important; }
 </style>
 </head>
 <body>
