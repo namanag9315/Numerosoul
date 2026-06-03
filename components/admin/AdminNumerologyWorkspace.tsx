@@ -96,7 +96,7 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
 
       {/* Global Autofill */}
       {bookings && bookings.length > 0 && (
-        <div className="flex items-center gap-4 bg-[#FDF9F1] px-5 py-3.5 rounded-xl border border-[#E8A020]/20 print:hidden shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-[#FDF9F1] px-5 py-3.5 rounded-xl border border-[#E8A020]/20 print:hidden shadow-sm">
            <label className="text-xs font-bold uppercase tracking-wider text-slate-600 whitespace-nowrap">
              Auto-fill from Booking:
            </label>
@@ -126,7 +126,7 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
       )}
 
       {/* Sub tabs for calculators */}
-      <div className="flex flex-wrap gap-1.5 border-b border-[#E8A020]/10 pb-px print:hidden">
+      <div className="flex overflow-x-auto whitespace-nowrap gap-1.5 border-b border-[#E8A020]/10 pb-2 scrollbar-hide snap-x print:hidden">
         {[
           { id: "dob", label: "DOB Combination", icon: CalendarDays },
           { id: "name", label: "Name Vibrations", icon: Sparkles },
@@ -146,7 +146,7 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
               key={tab.id}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onClick={() => setActiveSubTab(tab.id as any)}
-              className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-bold transition-all duration-150 ${
+              className={`flex items-center snap-start shrink-0 gap-1.5 border-b-2 px-4 py-2.5 text-xs font-bold transition-all duration-150 ${
                 active
                   ? "border-[#D4700A] text-slate-800"
                   : "border-transparent text-slate-500 hover:text-slate-800"
@@ -603,7 +603,7 @@ function AdvancedNameNumberCalculator() {
               </p>
             </div>
             
-            <div className="grid grid-cols-9 gap-1 text-center">
+            <div className="flex flex-wrap justify-center gap-2 md:grid md:grid-cols-9 md:gap-1 text-center">
               {[
                 { val: 1, letters: ["A", "I", "J", "Q", "Y"] },
                 { val: 2, letters: ["B", "K", "R"] },
@@ -616,7 +616,7 @@ function AdvancedNameNumberCalculator() {
                 { val: 9, letters: [] },
               ].map((col) => {
                 return (
-                  <div key={col.val} className="flex flex-col gap-1.5 p-1 bg-slate-50/50 rounded border border-slate-100">
+                  <div key={col.val} className="flex flex-col gap-1.5 p-1 bg-slate-50/50 rounded border border-slate-100 min-w-[36px]">
                     <span className="text-sm font-bold text-[#D4700A] border-b border-slate-200 pb-1 mb-1 font-numeral">
                       {col.val}
                     </span>

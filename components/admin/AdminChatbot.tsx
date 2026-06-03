@@ -111,7 +111,7 @@ export function AdminChatbot({ }: AdminChatbotProps) {
 
   return (
     <div className="flex flex-col h-full bg-slate-50/50">
-      <div className="p-4 border-b border-slate-200 bg-white flex gap-4">
+      <div className="p-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <label className="block text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
             <User size={12} /> Client Name
