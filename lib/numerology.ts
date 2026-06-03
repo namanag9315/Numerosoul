@@ -177,6 +177,10 @@ export function calculateLoShuGrid(dob: string): LoShuGridResult {
     .replace(/0/g, "")
     .split("")
     .map(Number);
+    
+  // Add Driver (Psychic) and Conductor (Destiny) numbers to the grid
+  rawDigits.push(psychic);
+  rawDigits.push(destiny);
 
   const counts: Record<number, number> = {
     1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0,
