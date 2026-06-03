@@ -216,12 +216,14 @@ function buildSmartPrompt(clientData: any, additionalInstructions = '') {
   const additionalTopics = getAdditionalTopics(clientData.service, KNOWLEDGE_BASE);
 
   const soulUrgeContent = KNOWLEDGE_BASE?.soul_urge_number?.[String(clientData.soulUrgeNumber)] || "";
+  const psychicBase = clientData.psychicNumber === 11 ? 2 : clientData.psychicNumber === 22 ? 4 : clientData.psychicNumber === 33 ? 6 : clientData.psychicNumber;
+  const destinyBase = clientData.destinyNumber === 11 ? 2 : clientData.destinyNumber === 22 ? 4 : clientData.destinyNumber === 33 ? 6 : clientData.destinyNumber;
 
   return `
 CLIENT DETAILS:
 - Name: ${clientData.name}
-- Psychic Number: ${clientData.psychicNumber} (calculated from day ${clientData.dayOfBirth})
-- Destiny Number: ${clientData.destinyNumber} (calculated from full DOB ${clientData.dob})
+- Psychic Number: ${clientData.psychicNumber} (Base Number: ${psychicBase}, calculated from day ${clientData.dayOfBirth})
+- Destiny Number: ${clientData.destinyNumber} (Base Number: ${destinyBase}, calculated from full DOB ${clientData.dob})
 - Soul Urge Number: ${clientData.soulUrgeNumber} (vowels)
 - Missing Numbers (1-9): ${missingNums.join(', ') || 'None'}
 - Name Number: ${clientData.nameNumber} (Chaldean)
