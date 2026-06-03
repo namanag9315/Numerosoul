@@ -16,6 +16,18 @@ CRITICAL RULES — follow these without exception:
 6. Every insight must reference the specific numbers from the knowledge base.
 7. Respond ONLY with valid JSON. No markdown, no preamble, no explanation outside the JSON.
 
+The KNOWLEDGE CONTEXT provided contains exact content from the Chaldean Numerology guide. You MUST use this content as the primary source for all interpretations.
+
+RULES:
+1. Lucky colors → use EXACTLY what the guide states for the client's psychic and destiny numbers
+2. Ruling planet → use the correct planet from the guide (4 = Rahu, NOT Sun. Sun = 1 only)
+3. Psychic descriptions → rewrite from guide content, keeping all specific traits mentioned
+4. Unfavorable periods → include the exact months from the guide, formatted as a caution section
+5. Favorable periods → include the exact dates/months from the guide, formatted as an opportunity section
+6. Master numbers (11, 22, 33) → always use the master_number section content, not the base number
+7. Soul urge → always include with content from the soul_urge_number section
+8. Do NOT invent traits or periods not in the guide
+
 OUTPUT FORMAT — return exactly this JSON structure:
 {
   "clientName": "string",
@@ -28,14 +40,12 @@ OUTPUT FORMAT — return exactly this JSON structure:
   "combinationNature": "string (e.g. Favourable / Challenging / Strong)",
   "executiveSummary": "string (3-4 sentences)",
   "corePersonality": "string (2-3 paragraphs, specific to Psychic number)",
+  "soulUrgeMeaning": "string (bullet points from guide)",
   "naturalGifts": [
-    {"title": "string", "description": "string"},
-    {"title": "string", "description": "string"},
     {"title": "string", "description": "string"}
   ],
   "lifePathMeaning": "string (2 paragraphs about Destiny number)",
   "challengesAndGrowth": [
-    {"challenge": "string", "remedy": "string"},
     {"challenge": "string", "remedy": "string"}
   ],
   "serviceSpecificInsight": {
@@ -47,7 +57,14 @@ OUTPUT FORMAT — return exactly this JSON structure:
   "luckyElements": {
     "days": ["string"],
     "colors": ["string"],
-    "compatibleNumbers": [number]
+    "compatibleNumbers": [number],
+    "friends": "string",
+    "neutral": "string",
+    "enemies": "string"
+  },
+  "timingAndPeriods": {
+    "favorable": ["string"],
+    "unfavorable": ["string"]
   },
   "combinationReading": "string (How Psychic and Destiny interact)",
   "umaPersonalInsight": "string (Uma's personal note)",
@@ -72,6 +89,65 @@ function getKnowledgeBase() {
     cachedDb = {};
   }
   return cachedDb;
+}
+
+function getCompatibleNumbers(psychicNum: number, _destinyNum: number): { friends: string; neutral: string; enemies: string } {
+  const db = getKnowledgeBase();
+  const compat = db.number_compatibility || {};
+  const base = String(psychicNum === 11 ? 2 : psychicNum === 22 ? 4 : psychicNum === 33 ? 6 : psychicNum);
+  return {
+    friends: compat[base]?.friends ?? "",
+    neutral: compat[base]?.neutral ?? "",
+    enemies: compat[base]?.enemies ?? ""
+  };
+}
+
+function getNumberKnowledge(psychicNum: number, destinyNum: number): string {
+  const db = getKnowledgeBase();
+  const coreDb = db.core_numbers || {};
+  const masterNums = db.master_number || {};
+  
+  let psychicContent = "";
+  let destinyContent = "";
+  
+  if (psychicNum === 11 || psychicNum === 22 || psychicNum === 33) {
+    psychicContent = masterNums[String(psychicNum)] ?? "";
+  } else {
+    psychicContent = coreDb[String(psychicNum)]?.psychic_meaning ?? "";
+  }
+  
+  if (destinyNum === 11 || destinyNum === 22 || destinyNum === 33) {
+    destinyContent = masterNums[String(destinyNum)] ?? "";
+  } else {
+    destinyContent = coreDb[String(destinyNum)]?.destiny_meaning ?? "";
+  }
+  
+  const luckyColors = db.lucky_colors || {};
+  const unfavorable = db.unfavorable_periods || {};
+  const favorable = db.favorable_periods || {};
+  
+  const psychicBase = psychicNum === 11 ? 2 : psychicNum === 22 ? 4 : psychicNum === 33 ? 6 : psychicNum;
+  const destinyBase = destinyNum === 11 ? 2 : destinyNum === 22 ? 4 : destinyNum === 33 ? 6 : destinyNum;
+  
+  return `
+PSYCHIC NUMBER ${psychicNum} KNOWLEDGE (from guide):
+${psychicContent}
+
+DESTINY NUMBER ${destinyNum} KNOWLEDGE (from guide):
+${destinyContent}
+
+LUCKY COLORS (from guide):
+- Primary lucky color (Psychic ${psychicNum}): ${luckyColors[String(psychicBase)] ?? ""}
+- Secondary lucky color (Destiny ${destinyNum}): ${luckyColors[String(destinyBase)] ?? ""}
+
+UNFAVORABLE PERIODS (from guide):
+- For Psychic ${psychicNum}: ${unfavorable[String(psychicBase)] ?? ""}
+- For Destiny ${destinyNum}: ${unfavorable[String(destinyBase)] ?? ""}
+
+FAVORABLE PERIODS (from guide):
+- For Psychic ${psychicNum}: ${favorable[String(psychicBase)] ?? ""}
+- For Destiny ${destinyNum}: ${favorable[String(destinyBase)] ?? ""}
+  `;
 }
 
 function calculateMissingNumbers(dob: string): number[] {
@@ -126,9 +202,6 @@ function getAdditionalTopics(serviceName: string, KNOWLEDGE_BASE: any): Record<s
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildSmartPrompt(clientData: any, additionalInstructions = '') {
-  const p = String(clientData.psychicNumber);
-  const d = String(clientData.destinyNumber);
-  
   const KNOWLEDGE_BASE = getKnowledgeBase();
 
   const missingNums = calculateMissingNumbers(clientData.dob);
@@ -142,18 +215,14 @@ function buildSmartPrompt(clientData: any, additionalInstructions = '') {
 
   const additionalTopics = getAdditionalTopics(clientData.service, KNOWLEDGE_BASE);
 
-  const relevantKnowledge = {
-    psychic_number_data: KNOWLEDGE_BASE?.core_numbers?.[p] || {},
-    destiny_number_data: KNOWLEDGE_BASE?.core_numbers?.[d] || {},
-    missing_numbers_rules: missingRules,
-    service_specific_topics: additionalTopics
-  };
+  const soulUrgeContent = KNOWLEDGE_BASE?.soul_urge_number?.[String(clientData.soulUrgeNumber)] || "";
 
   return `
 CLIENT DETAILS:
 - Name: ${clientData.name}
 - Psychic Number: ${clientData.psychicNumber} (calculated from day ${clientData.dayOfBirth})
 - Destiny Number: ${clientData.destinyNumber} (calculated from full DOB ${clientData.dob})
+- Soul Urge Number: ${clientData.soulUrgeNumber} (vowels)
 - Missing Numbers (1-9): ${missingNums.join(', ') || 'None'}
 - Name Number: ${clientData.nameNumber} (Chaldean)
 - Service: ${clientData.service}
@@ -161,7 +230,16 @@ CLIENT DETAILS:
 ${additionalInstructions ? `\nUMA'S SPECIFIC ADDITIONS:\n${additionalInstructions}` : ''}
 
 ### AUTHORITATIVE CHALDEAN KNOWLEDGE BASE ###
-${JSON.stringify(relevantKnowledge, null, 2)}
+${getNumberKnowledge(clientData.psychicNumber, clientData.destinyNumber)}
+
+SOUL URGE ${clientData.soulUrgeNumber} KNOWLEDGE:
+${soulUrgeContent}
+
+COMPATIBLE NUMBERS:
+${JSON.stringify(getCompatibleNumbers(clientData.psychicNumber, clientData.destinyNumber), null, 2)}
+
+ADDITIONAL DATA:
+${JSON.stringify({ missing_numbers_rules: missingRules, service_specific_topics: additionalTopics }, null, 2)}
 ### END OF KNOWLEDGE BASE ###
 
 TASK:
@@ -220,6 +298,10 @@ export async function POST(req: Request) {
     const nameClean = clientName.toUpperCase().replace(/[^A-Z]/g,'');
     const nameSum = nameClean.split('').reduce((a: number, c: string) => a + (CHALDEAN[c] || 0), 0);
     const nameNumber = reduceNumber(nameSum);
+
+    const VOWELS = new Set(["A", "E", "I", "O", "U"]);
+    const soulUrgeSum = nameClean.split('').filter((c: string) => VOWELS.has(c)).reduce((a: number, c: string) => a + (CHALDEAN[c] || 0), 0);
+    const soulUrgeNumber = reduceNumber(soulUrgeSum);
     
     const enrichedData = {
       name: clientName,
@@ -230,6 +312,7 @@ export async function POST(req: Request) {
       psychicNumber,
       destinyNumber,
       nameNumber,
+      soulUrgeNumber,
     };
 
     const completion = await groq.chat.completions.create({
@@ -258,16 +341,23 @@ export async function POST(req: Request) {
       }
     }
     
-    // Explicitly enforce psychicPlanet and destinyPlanet from KNOWLEDGE_BASE
-    const KNOWLEDGE_BASE = getKnowledgeBase();
-    const exactPsychicPlanet = KNOWLEDGE_BASE?.core_numbers?.[String(psychicNumber)]?.ruling_planet;
+    // Explicitly enforce psychicPlanet and destinyPlanet from CHALDEAN_RULING_PLANETS
+    const { CHALDEAN_RULING_PLANETS, LUCKY_DAYS } = await import('@/lib/numerologyEngine');
+    const exactPsychicPlanet = CHALDEAN_RULING_PLANETS[psychicNumber];
     if (exactPsychicPlanet) {
       reportData.psychicPlanet = exactPsychicPlanet;
     }
-    const exactDestinyPlanet = KNOWLEDGE_BASE?.core_numbers?.[String(destinyNumber)]?.ruling_planet;
+    const exactDestinyPlanet = CHALDEAN_RULING_PLANETS[destinyNumber];
     if (exactDestinyPlanet) {
       reportData.destinyPlanet = exactDestinyPlanet;
     }
+    
+    if (!reportData.luckyElements.days) reportData.luckyElements.days = [];
+    reportData.luckyElements.days.push(LUCKY_DAYS[psychicNumber] || "");
+    if (psychicNumber !== destinyNumber) {
+      reportData.luckyElements.days.push(LUCKY_DAYS[destinyNumber] || "");
+    }
+    reportData.luckyElements.days = reportData.luckyElements.days.filter(Boolean);
 
     return NextResponse.json({ reportData });
   } catch (error) {

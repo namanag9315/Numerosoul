@@ -248,6 +248,13 @@ export function renderReportHTML(data: any) {
     <div class="insight-block-text">${data.corePersonality || '-'}</div>
   </div>
   
+  ${data.soulUrgeMeaning ? `
+  <div class="insight-block" style="margin-bottom:16px">
+    <div class="insight-block-title">Soul Urge (Inner Desires)</div>
+    <div class="insight-block-text">${data.soulUrgeMeaning}</div>
+  </div>
+  ` : ''}
+  
   <div class="insight-block" style="margin-bottom:28px">
     <div class="insight-block-title">Life Path — Destiny ${data.destinyNumber || '-'}</div>
     <div class="insight-block-text">${data.lifePathMeaning || '-'}</div>
@@ -277,6 +284,26 @@ export function renderReportHTML(data: any) {
     </div>`).join('')}
   </div>
 
+  ${data.timingAndPeriods ? `
+  <!-- TIMING & PERIODS -->
+  <div class="section-title">✦ Timing & Periods</div>
+  <div class="insight-block" style="margin-bottom:28px">
+    <div class="insight-block-title">Favorable Periods (Best Time for Decisions)</div>
+    <div class="insight-block-text">
+      <ul style="padding-left: 20px; margin-top: 8px;">
+        ${(data.timingAndPeriods.favorable || []).map((p: string) => `<li style="margin-bottom: 6px;">${p}</li>`).join('')}
+      </ul>
+    </div>
+    
+    <div class="insight-block-title" style="margin-top:24px; color:#B91C1C;">Unfavorable Periods (Exercise Caution)</div>
+    <div class="insight-block-text">
+      <ul style="padding-left: 20px; margin-top: 8px;">
+        ${(data.timingAndPeriods.unfavorable || []).map((p: string) => `<li style="margin-bottom: 6px;">${p}</li>`).join('')}
+      </ul>
+    </div>
+  </div>
+  ` : ''}
+
   <!-- SERVICE SPECIFIC -->
   <div class="section-title">✦ ${data.serviceSpecificInsight?.heading || 'Insight'}</div>
   <div class="insight-block" style="margin-bottom:28px">
@@ -300,9 +327,21 @@ export function renderReportHTML(data: any) {
       <div class="lucky-card-title">Lucky Colors</div>
       ${(data.luckyElements?.colors || []).map((c: any)=>`<span class="lucky-pill">${c}</span>`).join('')}
     </div>
-    <div class="lucky-card">
-      <div class="lucky-card-title">Compatible Numbers</div>
+    <div class="lucky-card" style="grid-column: span 3;">
+      <div class="lucky-card-title">Number Compatibility</div>
+      ${data.luckyElements?.friends ? `
+      <div style="font-size:13px; margin-bottom:10px; margin-top:8px;">
+        <span style="color:#16A34A; font-weight:600; min-width:60px; display:inline-block;">Friends:</span> ${data.luckyElements.friends}
+      </div>
+      <div style="font-size:13px; margin-bottom:10px;">
+        <span style="color:#C9973A; font-weight:600; min-width:60px; display:inline-block;">Neutral:</span> ${data.luckyElements.neutral}
+      </div>
+      <div style="font-size:13px;">
+        <span style="color:#B91C1C; font-weight:600; min-width:60px; display:inline-block;">Avoid:</span> ${data.luckyElements.enemies}
+      </div>
+      ` : `
       ${(data.luckyElements?.compatibleNumbers || []).map((n: any)=>`<span class="lucky-pill" style="color:${getColor(n)};border-color:${getColor(n)}40">Number ${n}</span>`).join('')}
+      `}
     </div>
   </div>
 

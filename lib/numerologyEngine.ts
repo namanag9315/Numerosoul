@@ -37,19 +37,61 @@ function nameValue(letters: string[]): number {
   return letters.reduce((sum, letter) => sum + (CHALDEAN_ALPHABET[letter] || 0), 0);
 }
 
-const ARCHETYPES: Record<number, string> = {
+export const CHALDEAN_RULING_PLANETS: Record<number, string> = {
+  1: "Sun",
+  2: "Moon",
+  3: "Jupiter",
+  4: "Rahu (North Node)",
+  5: "Mercury",
+  6: "Venus",
+  7: "Ketu (South Node)",
+  8: "Saturn",
+  9: "Mars",
+  11: "Moon (Master)",
+  22: "Rahu (Master)",
+  33: "Jupiter (Master)"
+};
+
+export const CHALDEAN_ARCHETYPES: Record<number, string> = {
   1: "The Leader",
-  2: "The Peacemaker",
-  3: "The Communicator",
-  4: "The Builder",
+  2: "The Nurturer",
+  3: "The Creator",
+  4: "The Revolutionary",
   5: "The Explorer",
-  6: "The Nurturer",
-  7: "The Seeker",
-  8: "The Powerhouse",
-  9: "The Humanitarian",
-  11: "The Intuitive Master",
-  22: "The Master Builder",
-  33: "The Master Teacher"
+  6: "The Lover",
+  7: "The Saint",
+  8: "The Judge",
+  9: "The Commander",
+  11: "Master of Intuitiveness",
+  22: "Master Builder",
+  33: "Master of Spirituality"
+};
+
+export const LUCKY_COLORS: Record<number, string> = {
+  1: "Red and shades of red",
+  2: "White and shades of white",
+  3: "Yellow, Golden, and shades of yellow and golden",
+  4: "Black, grey, and shades of black and grey",
+  5: "Green and shades of green",
+  6: "White and rainbow colors",
+  7: "Black, grey, and shades of black and grey",
+  8: "Blue and shades of blue",
+  9: "Dark red and Blood red"
+};
+
+export const LUCKY_DAYS: Record<number, string> = {
+  1: "Sunday (Sun's day)",
+  2: "Monday (Moon's day)",
+  3: "Thursday (Jupiter's day)",
+  4: "Saturday (Rahu's day — Saturn governs Rahu)",
+  5: "Wednesday (Mercury's day)",
+  6: "Friday (Venus's day)",
+  7: "Monday (Ketu — related to Moon)",
+  8: "Saturday (Saturn's day)",
+  9: "Tuesday (Mars's day)",
+  11: "Monday (Moon rules Master 11)",
+  22: "Saturday (Rahu rules Master 22)",
+  33: "Thursday (Jupiter rules Master 33)"
 };
 
 export function computeProfile(clientName: string, clientDOB: string, targetYear?: number) {
@@ -134,8 +176,8 @@ export function computeProfile(clientName: string, clientDOB: string, targetYear
     personalYearFor,
     missingNumbers,
     archetypes: {
-      lifePath: ARCHETYPES[lifePath] || "Unknown",
-      psychic: ARCHETYPES[psychicNumber] || "Unknown"
+      lifePath: CHALDEAN_ARCHETYPES[lifePath] || "Unknown",
+      psychic: CHALDEAN_ARCHETYPES[psychicNumber] || "Unknown"
     }
   };
 }
