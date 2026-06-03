@@ -37,6 +37,8 @@ import { AdminChatbot } from "./AdminChatbot";
 import { AdvancedPremiumReportGenerator } from "./AdvancedPremiumReportGenerator";
 import { ChatMessage } from "@/components/ChatMessage";
 import { NameCorrectionTool } from "./NameCorrectionTool";
+import { AdminBabyNameRanker } from "./AdminBabyNameRanker";
+import { AdminAIGroqSuggestor } from "./AdminAIGroqSuggestor";
 import { analysePlanes, type PlaneAnalysis } from "@/lib/loshu-planes";
 import { motion } from "framer-motion";
 
@@ -68,7 +70,7 @@ interface Booking {
 
 export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking[] }) {
   const [activeSubTab, setActiveSubTab] = useState<
-    "dob" | "name" | "loshu" | "vehicle" | "personal_year" | "chatbot" | "report" | "name_correction"
+    "dob" | "name" | "name_correction" | "loshu" | "vehicle" | "personal_year" | "chatbot" | "report" | "baby_names" | "ai_suggest"
   >("dob");
 
   return (
@@ -129,6 +131,8 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
           { id: "dob", label: "DOB Combination", icon: CalendarDays },
           { id: "name", label: "Name Vibrations", icon: Sparkles },
           { id: "name_correction", label: "Name Correction", icon: Sparkles },
+          { id: "baby_names", label: "Baby Name Ranker", icon: Sparkles },
+          { id: "ai_suggest", label: "AI Groq Suggestor", icon: Sparkles },
           { id: "loshu", label: "Lo Shu Grid", icon: Grid },
           { id: "vehicle", label: "Vehicle Compatibility", icon: Car },
           { id: "personal_year", label: "Personal Year Theme", icon: Calendar },
@@ -140,7 +144,7 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveSubTab(tab.id as "dob" | "name" | "name_correction" | "loshu" | "vehicle" | "personal_year" | "chatbot" | "report")}
+              onClick={() => setActiveSubTab(tab.id as any)}
               className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-bold transition-all duration-150 ${
                 active
                   ? "border-[#D4700A] text-slate-800"
@@ -179,6 +183,12 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
         </div>
         <div className={activeSubTab === "report" ? "block" : "hidden"}>
           <AdvancedPremiumReportGenerator />
+        </div>
+        <div className={activeSubTab === "baby_names" ? "block" : "hidden"}>
+          <AdminBabyNameRanker />
+        </div>
+        <div className={activeSubTab === "ai_suggest" ? "block" : "hidden"}>
+          <AdminAIGroqSuggestor />
         </div>
       </div>
     </div>
