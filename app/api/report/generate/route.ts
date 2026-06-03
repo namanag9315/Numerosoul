@@ -212,7 +212,6 @@ Return valid JSON matching the specified output format.`;
 }
 
 function reduceNumber(n: number): number {
-  if (n === 11 || n === 22 || n === 33) return n;
   if (n <= 9) return n;
   const sum = String(n).split('').reduce((a, d) => a + parseInt(d, 10), 0);
   return reduceNumber(sum);
