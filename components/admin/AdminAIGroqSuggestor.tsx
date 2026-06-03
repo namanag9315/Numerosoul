@@ -7,7 +7,9 @@ export function AdminAIGroqSuggestor() {
   const [name, setName] = useState("RAHUL");
   const [dob, setDob] = useState("16/12/1982");
   const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [original, setOriginal] = useState<any>(null);
 
   const handleSuggest = async () => {

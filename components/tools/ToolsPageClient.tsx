@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { CalendarDays, Sparkles, Loader2, CheckCircle2, AlertTriangle, XCircle, Baby } from "lucide-react";
+import { CalendarDays, Sparkles } from "lucide-react";
 import {
   calculatePsychicNumber,
   calculateDestinyNumber,
   calculateChaldeanNameNumber,
-  checkNameCompatibility,
 } from "@/lib/numerology";
 import { PLANETS } from "@/lib/numerology-interpretations";
 
@@ -105,24 +104,6 @@ function BasicDOBCombinationAnalyser() {
       </div>
     </ToolCard>
   );
-}
-
-// Types
-interface NameSuggestion {
-  name: string;
-  compound: number;
-  nameNumber: number;
-  compatibility: {
-    compatible: boolean;
-    rating: string;
-    message: string;
-  };
-}
-
-interface BatchRankResult {
-  name: string;
-  calc: { compound: number; nameNumber: number; planet: string };
-  comp: { rating: 'excellent' | 'good' | 'neutral' | 'challenging'; message: string };
 }
 
 // Public Basic Name Calculator

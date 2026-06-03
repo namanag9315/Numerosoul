@@ -12,6 +12,7 @@ import {
 export function AdminBabyNameRanker() {
   const [dob, setDob] = useState("");
   const [namesText, setNamesText] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [results, setResults] = useState<any[]>([]);
 
   const handleRank = () => {
@@ -50,7 +51,7 @@ export function AdminBabyNameRanker() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="md:col-span-1">
-            <label className="mb-1 block text-xs font-semibold text-[color:var(--text-secondary)]">Baby's Date of Birth</label>
+            <label className="mb-1 block text-xs font-semibold text-[color:var(--text-secondary)]">Baby&apos;s Date of Birth</label>
             <input
               value={dob}
               onChange={(e) => setDob(e.target.value)}

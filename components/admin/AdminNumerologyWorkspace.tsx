@@ -144,6 +144,7 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
           return (
             <button
               key={tab.id}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onClick={() => setActiveSubTab(tab.id as any)}
               className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-bold transition-all duration-150 ${
                 active
