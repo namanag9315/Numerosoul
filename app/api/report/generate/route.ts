@@ -108,15 +108,6 @@ OUTPUT FORMAT — return exactly this JSON structure:
   ]
 }`;
 
-function calculateMissingNumbers(dob: string): number[] {
-  const digits = dob.replace(/\D/g, '').split('').map(d => parseInt(d, 10));
-  const missing: number[] = [];
-  for (let i = 1; i <= 9; i++) {
-    if (!digits.includes(i)) missing.push(i);
-  }
-  return missing;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildSmartPrompt(clientData: any, additionalInstructions = '') {
   const psychicNum = clientData.psychicNumber;
@@ -143,7 +134,8 @@ function buildSmartPrompt(clientData: any, additionalInstructions = '') {
   const destinyPlanet = getRulingPlanet(destinyNum);
 
   // Missing numbers with remedies from JSON
-  const missingNums = calculateMissingNumbers(clientData.dob);
+  const loShuResult = calculateLoShuGrid(clientData.dob);
+  const missingNums = loShuResult.missing;
   const missingContent = missingNums.map(n => {
     const content = getMissingNumberContent(n);
     return `Missing Number ${n}: ${content || 'Focus on developing qualities of this number.'}`;
