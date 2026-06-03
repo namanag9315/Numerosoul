@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    const key_secret = process.env.RAZORPAY_KEY_SECRET?.replace(/^["']|["']$/g, '');
     if (!key_secret) {
       return NextResponse.json(
         { message: "Razorpay keys are not configured." },

@@ -99,7 +99,7 @@ export async function getGoogleCalendarEvents(timeMin: Date, timeMax: Date): Pro
     return [];
   }
 
-  const calendarId = encodeURIComponent(process.env.GOOGLE_CALENDAR_ID!);
+  const calendarId = encodeURIComponent(process.env.GOOGLE_CALENDAR_ID!.replace(/^["']|["']$/g, ''));
   const accessToken = await getAccessToken();
 
   const url = new URL(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`);
@@ -256,7 +256,7 @@ export async function createGoogleCalendarEvent(bookingDetails: BookingDetailsIn
     return null;
   }
 
-  const calendarId = encodeURIComponent(process.env.GOOGLE_CALENDAR_ID!);
+  const calendarId = encodeURIComponent(process.env.GOOGLE_CALENDAR_ID!.replace(/^["']|["']$/g, ''));
   const accessToken = await getAccessToken();
 
   const client = bookingDetails.client ?? {};

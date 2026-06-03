@@ -71,7 +71,7 @@ async function sendLifecycleMessage(payload: CustomerJourneyPayload, kind: Lifec
 }
 
 async function sendBrevoEmail(payload: CustomerJourneyPayload, content: MessageContent) {
-  const apiKey = process.env.BREVO_API_KEY;
+  const apiKey = process.env.BREVO_API_KEY?.replace(/^["']|["']$/g, '');
 
   if (!apiKey || !payload.clientEmail) {
     return false;
@@ -126,9 +126,9 @@ async function sendWhatsapp(payload: CustomerJourneyPayload, content: MessageCon
 }
 
 async function sendTwilioWhatsappText(phone: string, message: string) {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_WHATSAPP_FROM;
+  const accountSid = process.env.TWILIO_ACCOUNT_SID?.replace(/^["']|["']$/g, '');
+  const authToken = process.env.TWILIO_AUTH_TOKEN?.replace(/^["']|["']$/g, '');
+  const from = process.env.TWILIO_WHATSAPP_FROM?.replace(/^["']|["']$/g, '');
 
   if (!accountSid || !authToken || !from) {
     return false;

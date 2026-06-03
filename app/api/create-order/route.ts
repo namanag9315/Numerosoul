@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Amount is required." }, { status: 400 });
     }
 
-    const key_id = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    const key_id = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.replace(/^["']|["']$/g, '');
+    const key_secret = process.env.RAZORPAY_KEY_SECRET?.replace(/^["']|["']$/g, '');
 
     if (!key_id || !key_secret) {
       return NextResponse.json(
