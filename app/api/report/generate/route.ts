@@ -309,18 +309,18 @@ export async function POST(req: Request) {
       }
     }
 
-    // Enforce correct planets from our data extractor
-    const exactPsychicPlanet = getRulingPlanet(psychicNumber);
+    // Enforce correct planets from CHALDEAN_RULING_PLANETS (authoritative, not JSON which has errors e.g. 4=Sun instead of Rahu)
+    const { CHALDEAN_RULING_PLANETS, LUCKY_DAYS } = await import('@/lib/numerologyEngine');
+    const exactPsychicPlanet = CHALDEAN_RULING_PLANETS[psychicNumber];
     if (exactPsychicPlanet) {
       reportData.psychicPlanet = exactPsychicPlanet;
     }
-    const exactDestinyPlanet = getRulingPlanet(destinyNumber);
+    const exactDestinyPlanet = CHALDEAN_RULING_PLANETS[destinyNumber];
     if (exactDestinyPlanet) {
       reportData.destinyPlanet = exactDestinyPlanet;
     }
 
     // Enforce lucky days from engine
-    const { LUCKY_DAYS } = await import('@/lib/numerologyEngine');
     if (!reportData.luckyElements) reportData.luckyElements = {};
     if (!reportData.luckyElements.days) reportData.luckyElements.days = [];
     reportData.luckyElements.days = [LUCKY_DAYS[psychicNumber] || ''].filter(Boolean);
