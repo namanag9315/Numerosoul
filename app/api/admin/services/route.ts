@@ -18,7 +18,7 @@ export async function GET() {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     const res = await fetch(`${supabaseUrl}/rest/v1/services?select=*&order=name.asc`, {
@@ -77,7 +77,7 @@ export async function PUT(request: NextRequest) {
     if (description !== undefined) updatePayload.description = description || null;
     if (isActive !== undefined) updatePayload.is_active = Boolean(isActive);
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     const res = await fetch(`${supabaseUrl}/rest/v1/services?id=eq.${id}`, {

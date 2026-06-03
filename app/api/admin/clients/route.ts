@@ -18,7 +18,7 @@ export async function GET() {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     const res = await fetch(`${supabaseUrl}/rest/v1/clients?select=*&order=name.asc`, {
@@ -76,7 +76,7 @@ export async function PUT(request: NextRequest) {
     if (dateOfBirth !== undefined) updatePayload.date_of_birth = normalizeDate(dateOfBirth) ?? null;
     if (notes !== undefined) updatePayload.notes = notes || null;
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     const res = await fetch(`${supabaseUrl}/rest/v1/clients?id=eq.${id}`, {

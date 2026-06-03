@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Coupon code and subtotal are required." }, { status: 400 });
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (supabaseUrl && supabaseKey) {

@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 export async function isAuthenticated(): Promise<boolean> {
   const cookieStore = cookies();
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!.replace(/^["']|["']$/g, ''),
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
@@ -45,7 +45,7 @@ export async function verifyAdminUserApi(request: NextRequest): Promise<boolean>
 
   const accessToken = authHeader.substring(7);
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {

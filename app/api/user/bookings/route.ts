@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     const accessToken = authHeader.substring(7);
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

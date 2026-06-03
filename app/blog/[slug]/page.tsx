@@ -50,7 +50,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
     notFound();
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://numerosoul.in";
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://numerosoul.in").replace(/^["']|["']$/g, '');
   const postUrl = `${siteUrl}/blog/${post.slug}`;
   const relatedPosts = getRelatedPosts(post.slug, post.category);
 

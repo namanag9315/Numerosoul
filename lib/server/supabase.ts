@@ -576,7 +576,7 @@ function supabaseFetch(url: URL, init: RequestInit) {
 }
 
 function getSupabaseUrl() {
-  return process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
 }
 
 function isUuid(value: string) {

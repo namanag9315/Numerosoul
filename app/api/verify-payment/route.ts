@@ -71,7 +71,8 @@ export async function POST(request: NextRequest) {
     if (normalizedMode === "video") {
       // Generate a secure unique room ID for the native Jitsi session
       const roomId = crypto.randomUUID();
-      videoConferenceLink = `${process.env.NEXT_PUBLIC_SITE_URL || "https://numerosoul.in"}/session/${roomId}`;
+      const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://numerosoul.in").replace(/^["']|["']$/g, '');
+      videoConferenceLink = `${siteUrl}/session/${roomId}`;
     }
 
     const invoiceNumber = createInvoiceNumber();
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get("Authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const accessToken = authHeader.substring(7);
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       if (supabaseUrl && supabaseAnonKey) {
         try {

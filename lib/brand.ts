@@ -8,7 +8,7 @@ export const BRAND = {
   region: "Uttar Pradesh",
   country: "India",
   email: "numerosoul6@gmail.com",
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://numerasoul.in",
+  siteUrl: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://numerasoul.in").replace(/^["']|["']$/g, ''),
   invoicePrefix: "NOS",
   colors: {
     amber: "#E8A020",

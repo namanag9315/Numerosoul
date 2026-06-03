@@ -18,7 +18,7 @@ export async function GET() {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     const res = await fetch(
@@ -77,7 +77,7 @@ export async function PUT(request: NextRequest) {
     if (timeSlot !== undefined) updatePayload.time_slot = normalizeTime(timeSlot);
     if (status !== undefined) updatePayload.status = status;
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '');
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     const res = await fetch(`${supabaseUrl}/rest/v1/bookings?id=eq.${id}`, {
