@@ -91,7 +91,7 @@ function getKnowledgeBase() {
   return cachedDb;
 }
 
-function getCompatibleNumbers(psychicNum: number, _destinyNum: number): { friends: string; neutral: string; enemies: string } {
+function getCompatibleNumbers(psychicNum: number): { friends: string; neutral: string; enemies: string } {
   const db = getKnowledgeBase();
   const compat = db.number_compatibility || {};
   const base = String(psychicNum === 11 ? 2 : psychicNum === 22 ? 4 : psychicNum === 33 ? 6 : psychicNum);
@@ -236,7 +236,7 @@ SOUL URGE ${clientData.soulUrgeNumber} KNOWLEDGE:
 ${soulUrgeContent}
 
 COMPATIBLE NUMBERS:
-${JSON.stringify(getCompatibleNumbers(clientData.psychicNumber, clientData.destinyNumber), null, 2)}
+${JSON.stringify(getCompatibleNumbers(clientData.psychicNumber), null, 2)}
 
 ADDITIONAL DATA:
 ${JSON.stringify({ missing_numbers_rules: missingRules, service_specific_topics: additionalTopics }, null, 2)}
