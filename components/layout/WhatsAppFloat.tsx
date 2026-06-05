@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { isAdminRoute } from "@/lib/admin-path";
 import { getWhatsAppLink } from "@/lib/whatsapp";
 
 export function WhatsAppFloat() {
@@ -10,7 +11,7 @@ export function WhatsAppFloat() {
   const pathname = usePathname();
   const link = getWhatsAppLink();
 
-  if (pathname.startsWith("/admin")) {
+  if (isAdminRoute(pathname)) {
     return null;
   }
 

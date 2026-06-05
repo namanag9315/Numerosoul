@@ -344,7 +344,73 @@ export async function POST(req: Request) {
       return obj;
     };
 
-    reportData = sanitize(reportData);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const compactEmpty = (obj: any): any => {
+      if (typeof obj === 'string') return obj.trim();
+      if (Array.isArray(obj)) {
+        return obj
+          .map(compactEmpty)
+          .filter((item) => {
+            if (typeof item === 'string') return item.trim().length > 0;
+            if (Array.isArray(item)) return item.length > 0;
+            if (item && typeof item === 'object') return Object.keys(item).length > 0;
+            return item !== null && item !== undefined;
+          });
+      }
+      if (obj && typeof obj === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result: any = {};
+        for (const [k, v] of Object.entries(obj)) {
+          result[k] = compactEmpty(v);
+        }
+        return result;
+      }
+      return obj;
+    };
+
+    reportData = compactEmpty(sanitize(reportData));
+
+    const hasReportText = (value: unknown) =>
+      typeof value === 'string' && value.trim().length > 0;
+    const extractNumbers = (value: string) =>
+      (value.match(/\d+/g) || []).map((n) => Number(n)).filter((n) => n >= 1 && n <= 9);
+    const includesNumber = (value: string, n: number) => extractNumbers(value).includes(n);
+
+    const friendNumbers = extractNumbers(compatData.friends);
+    const nameQuality = includesNumber(compatData.friends, nameNumber)
+      ? 'favorable'
+      : includesNumber(compatData.neutral, nameNumber)
+        ? 'neutral'
+        : includesNumber(compatData.enemies, nameNumber)
+          ? 'challenging and should be reviewed with remedies'
+          : 'requires personal review';
+
+    reportData.clientName = clientName.trim();
+    reportData.clientDob = clientDob.trim();
+    reportData.serviceName = serviceName || 'Numerology Consultation';
+    reportData.serviceSpecificInsight = {
+      ...(reportData.serviceSpecificInsight || {}),
+      serviceType: serviceName || 'Numerology Consultation',
+    };
+    reportData.psychicNumber = psychicNumber;
+    reportData.destinyNumber = destinyNumber;
+    reportData.nameNumber = nameNumber;
+    reportData.soulUrgeNumber = soulUrgeNumber;
+
+    if (!hasReportText(reportData.psychicArchetype)) {
+      reportData.psychicArchetype = `Psychic Number ${psychicNumber}`;
+    }
+    if (!hasReportText(reportData.destinyArchetype)) {
+      reportData.destinyArchetype = `Destiny Number ${destinyNumber}`;
+    }
+    if (!hasReportText(reportData.nameAssessment)) {
+      reportData.nameAssessment = `Name Number: ${nameNumber} - This is ${nameQuality} for this chart based on the number compatibility table.`;
+    }
+    if (!Array.isArray(reportData.recommendedNameSeries) || reportData.recommendedNameSeries.length === 0) {
+      reportData.recommendedNameSeries = friendNumbers.length > 0
+        ? friendNumbers.slice(0, 5)
+        : [psychicNumber, destinyNumber, nameNumber];
+    }
 
     return NextResponse.json({ reportData });
   } catch (error) {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Constellation } from "@/components/effects/Constellation";
+import { isAdminRoute } from "@/lib/admin-path";
 
 const services = [
   "Life Path Reading",
@@ -32,7 +33,7 @@ const footerConnections: Array<[number, number]> = [
 export function Footer() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin")) {
+  if (isAdminRoute(pathname)) {
     return null;
   }
 

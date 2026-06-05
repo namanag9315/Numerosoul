@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isAdminRoute } from "@/lib/admin-path";
 import { getWhatsAppLink } from "@/lib/whatsapp";
 
 export function MobileStickyBar() {
@@ -16,7 +17,7 @@ export function MobileStickyBar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  if (!visible || pathname.startsWith("/admin")) return null;
+  if (!visible || isAdminRoute(pathname)) return null;
 
   return (
     <div className="mobile-sticky-bar">

@@ -8,6 +8,7 @@ import {
 } from "@/lib/numerology";
 import { AdminNumerologyWorkspace } from "./AdminNumerologyWorkspace";
 import { ClientReportModal } from "./ClientReportModal";
+import { getAdminPath } from "@/lib/admin-path";
 import {
   BarChart3,
   Calendar,
@@ -26,7 +27,7 @@ import {
   Sparkles,
   Info,
   Send,
-  FileText
+  FileText,
 } from "lucide-react";
 
 const getAdminVideoLink = (url?: string | null) => {
@@ -111,11 +112,32 @@ type DashboardStats = {
   toolUsage: Array<{ name: string; count: number }>;
 };
 
+type DashboardTab =
+  | "overview"
+  | "bookings"
+  | "clients"
+  | "services"
+  | "marketing"
+  | "billing"
+  | "analysis";
+
+const dashboardTabs: Array<{
+  id: DashboardTab;
+  label: string;
+  icon: typeof BarChart3;
+}> = [
+  { id: "overview", label: "Overview", icon: BarChart3 },
+  { id: "bookings", label: "Bookings", icon: Calendar },
+  { id: "clients", label: "Clients", icon: Users },
+  { id: "analysis", label: "Workspace", icon: Sparkles },
+  { id: "services", label: "Services", icon: Settings2 },
+  { id: "marketing", label: "Campaigns", icon: Megaphone },
+  { id: "billing", label: "Invoices", icon: Receipt },
+];
+
 export function DashboardContainer() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "bookings" | "clients" | "services" | "marketing" | "billing" | "analysis"
-  >("overview");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
 
   const [selectedBookingForReport, setSelectedBookingForReport] = useState<Booking | null>(null);
 
@@ -199,7 +221,7 @@ export function DashboardContainer() {
   const handleLogout = async () => {
     const { supabase } = await import("@/lib/supabase-client");
     await supabase.auth.signOut();
-    router.push(process.env.NEXT_PUBLIC_ADMIN_PATH || "/admin");
+    router.replace(getAdminPath());
     router.refresh();
   };
 
@@ -395,68 +417,68 @@ export function DashboardContainer() {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-      {/* 1. Header Bar */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#E8A020]/15 pb-6 mb-8">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#E8A020] animate-pulse" />
-            <h1 className="font-display text-3xl font-semibold tracking-tight text-slate-800">
-              NumeroSoul Admin Control
-            </h1>
+    <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-20 -mx-4 mb-6 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />
+              <h1 className="font-sans text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">
+                NumeroSoul Admin
+              </h1>
+            </div>
+            <p className="mt-1 text-sm font-medium text-slate-600">
+              Professional numerology operations workspace
+            </p>
           </div>
-          <p className="mt-1 text-sm text-slate-500 font-medium">
-            Uma Rastogi - Professional Numerology Consultant Panel
-          </p>
-        </div>
 
-        <button
-          onClick={handleLogout}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-[#E8A020]/25 bg-white/70 backdrop-blur-md px-5 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-[#E8A020]/10 hover:text-slate-800 active:scale-95"
-        >
-          <LogOut className="h-4 w-4" /> Logout
-        </button>
+          <button
+            onClick={handleLogout}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-950 active:scale-[0.99]"
+          >
+            <LogOut className="h-4 w-4" /> Logout
+          </button>
+        </div>
       </header>
 
-      {/* 2. Navigation Tabs */}
-      <nav className="mb-8 flex flex-wrap gap-2 border-b border-[#E8A020]/15 pb-px">
-        {[
-          { id: "overview", label: "Overview & Stats", icon: BarChart3 },
-          { id: "bookings", label: "Bookings", icon: Calendar },
-          { id: "clients", label: "Clients CRM", icon: Users },
-          { id: "analysis", label: "Numerology Workspace", icon: Sparkles },
-          { id: "services", label: "Service Pricing", icon: Settings2 },
-          { id: "marketing", label: "Campaigns Manager", icon: Megaphone },
-          { id: "billing", label: "Invoicing", icon: Receipt },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const active = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id as "overview" | "bookings" | "clients" | "services" | "marketing" | "billing" | "analysis");
-                setSelectedBookingForBill(null); // clear bill selection
-              }}
-              className={`flex items-center gap-2.5 border-b-2 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
-                active
-                  ? "border-[#D4700A] text-slate-800"
-                  : "border-transparent text-slate-500 hover:border-[#E8A020]/30 hover:text-slate-800"
-              }`}
-            >
-              <Icon className={`h-4.5 w-4.5 ${active ? "text-[#D4700A]" : "text-slate-400"}`} />
-              {tab.label}
-            </button>
-          );
-        })}
+      <nav className="mb-6 overflow-x-auto border-b border-slate-200" aria-label="Admin sections">
+        <div className="flex min-w-max gap-1" role="tablist">
+          {dashboardTabs.map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setSelectedBookingForBill(null);
+                }}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-semibold transition ${
+                  active
+                    ? "border-slate-950 bg-white text-slate-950"
+                    : "border-transparent text-slate-600 hover:bg-white hover:text-slate-950"
+                }`}
+              >
+                <Icon className={`h-4 w-4 ${active ? "text-blue-700" : "text-slate-500"}`} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
-      {/* Loading Overlay */}
       {loading && (
-        <div className="flex h-96 items-center justify-center rounded-2xl bg-white/50 border border-[#E8A020]/10">
+        <div
+          className="flex h-80 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm"
+          role="status"
+          aria-live="polite"
+        >
           <div className="flex flex-col items-center gap-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#E8A020] border-t-transparent" />
-            <p className="text-sm font-semibold text-slate-500">Loading control panel data...</p>
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-700" />
+            <p className="text-sm font-semibold text-slate-600">Loading admin data...</p>
           </div>
         </div>
       )}

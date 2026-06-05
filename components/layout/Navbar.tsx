@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase-client";
 import { User } from "@supabase/supabase-js";
+import { isAdminRoute } from "@/lib/admin-path";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -43,7 +44,7 @@ export function Navbar() {
     };
   }, []);
 
-  if (pathname.startsWith("/admin")) {
+  if (isAdminRoute(pathname)) {
     return null;
   }
 
