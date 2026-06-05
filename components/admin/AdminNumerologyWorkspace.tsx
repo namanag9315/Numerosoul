@@ -8,7 +8,6 @@ import {
   Car,
   Calendar,
   Printer,
-  AlertTriangle,
   CheckCircle2,
   XCircle,
   MessageSquare,
@@ -16,7 +15,6 @@ import {
 import {
   calculatePsychicNumber,
   calculateDestinyNumber,
-  calculateChaldeanNameNumber,
   calculateLoShuGrid,
   calculateVehicleVibration,
   checkVehicleCompatibility,
@@ -36,11 +34,12 @@ import {
 import { AdminChatbot } from "./AdminChatbot";
 import { AdvancedPremiumReportGenerator } from "./AdvancedPremiumReportGenerator";
 import { ChatMessage } from "@/components/ChatMessage";
-import { NameCorrectionTool } from "./NameCorrectionTool";
+import { UnifiedNameLaboratory } from "./UnifiedNameLaboratory";
 import { AdminBabyNameRanker } from "./AdminBabyNameRanker";
 import { AdminAIGroqSuggestor } from "./AdminAIGroqSuggestor";
 import { analysePlanes, type PlaneAnalysis } from "@/lib/loshu-planes";
 import { motion } from "framer-motion";
+import { FileText, Cpu } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -69,9 +68,40 @@ interface Booking {
 }
 
 export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking[] }) {
-  const [activeSubTab, setActiveSubTab] = useState<
-    "dob" | "name" | "name_correction" | "loshu" | "vehicle" | "personal_year" | "chatbot" | "report" | "baby_names" | "ai_suggest"
-  >("dob");
+  const [activeCategory, setActiveCategory] = useState<"core" | "name" | "ai" | "misc">("core");
+  const [activeTool, setActiveTool] = useState<string>("dob");
+
+  const CATEGORIES = [
+    { id: "core", label: "Core Birth Chart", icon: CalendarDays },
+    { id: "name", label: "Name Laboratory", icon: Sparkles },
+    { id: "ai", label: "AI & Reports", icon: Cpu },
+    { id: "misc", label: "Miscellaneous", icon: Grid },
+  ] as const;
+
+  const TOOLS = {
+    core: [
+      { id: "dob", label: "DOB Combination", icon: CalendarDays },
+      { id: "loshu", label: "Lo Shu Grid", icon: Grid },
+      { id: "personal_year", label: "Personal Year Theme", icon: Calendar },
+    ],
+    name: [
+      { id: "name_analysis", label: "Name Analysis & Correction", icon: Sparkles },
+      { id: "baby_names", label: "Baby Name Ranker", icon: Sparkles },
+    ],
+    ai: [
+      { id: "report", label: "Premium Report", icon: FileText },
+      { id: "ai_suggest", label: "AI Groq Suggestor", icon: Sparkles },
+      { id: "chatbot", label: "Diagnostics Bot", icon: MessageSquare },
+    ],
+    misc: [
+      { id: "vehicle", label: "Vehicle Compatibility", icon: Car },
+    ]
+  };
+
+  const handleCategoryChange = (catId: "core" | "name" | "ai" | "misc") => {
+    setActiveCategory(catId);
+    setActiveTool(TOOLS[catId][0].id);
+  };
 
   return (
     <div className="space-y-6 print:space-y-8">
@@ -125,70 +155,80 @@ export function AdminNumerologyWorkspace({ bookings = [] }: { bookings?: Booking
         </div>
       )}
 
-      {/* Sub tabs for calculators */}
-      <div className="flex overflow-x-auto whitespace-nowrap gap-1.5 border-b border-[#E8A020]/10 pb-2 scrollbar-hide snap-x print:hidden">
-        {[
-          { id: "dob", label: "DOB Combination", icon: CalendarDays },
-          { id: "name", label: "Name Vibrations", icon: Sparkles },
-          { id: "name_correction", label: "Name Correction", icon: Sparkles },
-          { id: "baby_names", label: "Baby Name Ranker", icon: Sparkles },
-          { id: "ai_suggest", label: "AI Groq Suggestor", icon: Sparkles },
-          { id: "loshu", label: "Lo Shu Grid", icon: Grid },
-          { id: "vehicle", label: "Vehicle Compatibility", icon: Car },
-          { id: "personal_year", label: "Personal Year Theme", icon: Calendar },
-          { id: "chatbot", label: "Diagnostics Bot", icon: MessageSquare },
-          { id: "report", label: "Premium Report", icon: Sparkles },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const active = activeSubTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onClick={() => setActiveSubTab(tab.id as any)}
-              className={`flex items-center snap-start shrink-0 gap-1.5 border-b-2 px-4 py-2.5 text-xs font-bold transition-all duration-150 ${
-                active
-                  ? "border-[#D4700A] text-slate-800"
-                  : "border-transparent text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {tab.label}
-            </button>
-          );
-        })}
+      {/* Two-Tier Navigation */}
+      <div className="flex flex-col gap-3 print:hidden">
+        {/* Top Tier: Categories */}
+        <div className="flex overflow-x-auto whitespace-nowrap gap-2 pb-2 scrollbar-hide snap-x">
+          {CATEGORIES.map((cat) => {
+            const Icon = cat.icon;
+            const active = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => handleCategoryChange(cat.id)}
+                className={`flex items-center snap-start shrink-0 gap-2 rounded-xl border px-5 py-2.5 text-sm font-bold transition-all duration-200 ${
+                  active
+                    ? "border-[#D4700A] bg-gradient-to-r from-[#E8A020] to-[#D4700A] text-white shadow-md"
+                    : "border-[#E8A020]/20 bg-white/75 text-slate-600 hover:border-[#E8A020]/50 hover:bg-[#FDF9F1] hover:text-slate-800"
+                }`}
+              >
+                <Icon className={`h-4 w-4 ${active ? "text-white" : "text-[#D4700A]"}`} />
+                {cat.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Second Tier: Tools */}
+        <div className="flex overflow-x-auto whitespace-nowrap gap-1.5 border-b border-[#E8A020]/10 pb-2 scrollbar-hide snap-x">
+          {TOOLS[activeCategory].map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTool === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTool(tab.id)}
+                className={`flex items-center snap-start shrink-0 gap-1.5 border-b-2 px-4 py-2 text-xs font-bold transition-all duration-150 ${
+                  active
+                    ? "border-[#D4700A] text-slate-800"
+                    : "border-transparent text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Calculator Content */}
       <div className="bg-white/72 backdrop-blur-md rounded-2xl border border-[#E8A020]/16 p-6 shadow-sm print:border-none print:shadow-none print:p-0">
-        <div className={activeSubTab === "dob" ? "block" : "hidden"}>
+        <div className={activeTool === "dob" ? "block" : "hidden"}>
           <AdvancedDOBCombinationAnalyser />
         </div>
-        <div className={activeSubTab === "name" ? "block" : "hidden"}>
-          <AdvancedNameNumberCalculator />
+        <div className={activeTool === "name_analysis" ? "block" : "hidden"}>
+          <UnifiedNameLaboratory />
         </div>
-        <div className={activeSubTab === "name_correction" ? "block" : "hidden"}>
-          <NameCorrectionTool />
-        </div>
-        <div className={activeSubTab === "loshu" ? "block" : "hidden"}>
+        <div className={activeTool === "loshu" ? "block" : "hidden"}>
           <AdvancedLoShuGridAnalyser />
         </div>
-        <div className={activeSubTab === "vehicle" ? "block" : "hidden"}>
+        <div className={activeTool === "vehicle" ? "block" : "hidden"}>
           <AdvancedVehicleVibrationAnalyser />
         </div>
-        <div className={activeSubTab === "personal_year" ? "block" : "hidden"}>
+        <div className={activeTool === "personal_year" ? "block" : "hidden"}>
           <AdvancedPersonalYearAnalyser />
         </div>
-        <div className={activeSubTab === "chatbot" ? "block" : "hidden"}>
+        <div className={activeTool === "chatbot" ? "block" : "hidden"}>
           <AdminChatbot bookings={bookings} />
         </div>
-        <div className={activeSubTab === "report" ? "block" : "hidden"}>
+        <div className={activeTool === "report" ? "block" : "hidden"}>
           <AdvancedPremiumReportGenerator />
         </div>
-        <div className={activeSubTab === "baby_names" ? "block" : "hidden"}>
+        <div className={activeTool === "baby_names" ? "block" : "hidden"}>
           <AdminBabyNameRanker />
         </div>
-        <div className={activeSubTab === "ai_suggest" ? "block" : "hidden"}>
+        <div className={activeTool === "ai_suggest" ? "block" : "hidden"}>
           <AdminAIGroqSuggestor />
         </div>
       </div>
@@ -390,280 +430,7 @@ function AdvancedDOBCombinationAnalyser() {
   );
 }
 
-// 2. NAME NUMBER CALCULATOR
-function AdvancedNameNumberCalculator() {
-  const [name, setName] = useState("Rahul Sharma");
-
-  useEffect(() => {
-    const handle = (e: Event) => { const detail = (e as CustomEvent).detail; if (detail?.name) setName(detail.name); };
-    window.addEventListener("autofill-client", handle);
-    return () => window.removeEventListener("autofill-client", handle);
-  }, []);
-
-  const [dob, setDob] = useState("16/12/1982"); // used for compatibility calculations
-
-  const result = useMemo(() => {
-    if (!name.trim()) return null;
-    const calc = calculateChaldeanNameNumber(name);
-
-    let psychic = null;
-    let destiny = null;
-    let compatibility = null;
-    let oppositionWarning = false;
-
-    if (dob.trim()) {
-      try {
-        psychic = calculatePsychicNumber(dob);
-        destiny = calculateDestinyNumber(dob);
-
-        // Opposition check: 3 vs 6
-        if (
-          (calc.nameNumber === 3 && (psychic === 6 || destiny === 6)) ||
-          (calc.nameNumber === 6 && (psychic === 3 || destiny === 3))
-        ) {
-          oppositionWarning = true;
-        }
-
-        // Check if name reduces to one of the lucky series for this combination
-        const combKey = `${psychic}-${destiny}`;
-        const comb = DOB_COMBINATIONS[combKey];
-        const bestSeries = comb?.bestNameSeries.split(",").map((s) => Number(s.trim())) || [];
-        const isLucky = bestSeries.includes(calc.nameNumber);
-
-        compatibility = {
-          isLucky,
-          bestSeries,
-          psychic,
-          destiny,
-        };
-      } catch {
-        // ignore DOB parsing error for compatibility
-      }
-    }
-
-    return {
-      ...calc,
-      compatibility,
-      oppositionWarning,
-    };
-  }, [name, dob]);
-
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 border-b border-[#E8A020]/10 pb-4 print:pb-0">
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-            Target Name
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter full name"
-            className="w-full min-h-10 px-3.5 rounded-xl border border-[#E8A020]/20 bg-white/75 text-sm outline-none transition focus:border-[#E8A020]/60 focus:bg-white focus:ring-1 focus:ring-[#E8A020]/40 print:hidden"
-          />
-          <p className="hidden print:block text-lg font-bold text-slate-800">
-            Name: {name}
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-            Owner DOB (optional)
-          </label>
-          <input
-            type="text"
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-            placeholder="DD/MM/YYYY"
-            className="w-full min-h-10 px-3.5 rounded-xl border border-[#E8A020]/20 bg-white/75 text-sm outline-none transition focus:border-[#E8A020]/60 focus:bg-white focus:ring-1 focus:ring-[#E8A020]/40 print:hidden"
-          />
-          <p className="hidden print:block text-xs font-medium text-slate-500">
-            DOB: {dob || "Not provided"}
-          </p>
-        </div>
-      </div>
-
-      {result ? (
-        <div className="space-y-6 print:space-y-8">
-          {/* Main Numbers */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-[#E8A020]/12 bg-[#E8A020]/4 p-4 text-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                Chaldean Compound Total
-              </span>
-              <span className="text-4xl font-extrabold text-[#D4700A] my-1 block">
-                {result.compound}
-              </span>
-              <span className="text-xs font-bold text-slate-600">
-                Verdict: <span className={result.verdict.includes("Good") || result.verdict.includes("Best") || result.verdict.includes("Excellent") ? "text-green-600" : "text-amber-600"}>{result.verdict}</span>
-              </span>
-            </div>
-
-            <div className="rounded-xl border border-[#E8A020]/12 bg-[#E8A020]/4 p-4 text-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                Name Number (Reduced)
-              </span>
-              <span className="text-4xl font-extrabold text-[#D4700A] my-1 block">
-                {result.nameNumber}
-              </span>
-              <span className="text-xs font-semibold text-slate-600 block">
-                Planet: {result.planet}
-              </span>
-            </div>
-          </div>
-
-          {/* Opposition Warning & Alerts */}
-          {result.oppositionWarning && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 flex gap-3 text-red-800">
-              <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-              <div>
-                <h5 className="font-bold text-sm">Critical 3-6 Opposition Conflict!</h5>
-                <p className="text-xs mt-1">
-                  This name vibrates to {result.nameNumber} (ruled by {result.planet}), which stands in direct numbers conflict with a 3 or 6 in the client&apos;s DOB. This opposition frequently causes legal friction, blockages, and delayed marriage/success.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {result.compatibility && (
-            <div className={`rounded-xl border p-4 flex gap-3 ${result.compatibility.isLucky ? "border-green-200 bg-green-50 text-green-800" : "border-amber-200 bg-amber-50/50 text-amber-800"}`}>
-              {result.compatibility.isLucky ? (
-                <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 text-green-600" />
-              ) : (
-                <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5 text-amber-600" />
-              )}
-              <div>
-                <h5 className="font-bold text-sm">
-                  {result.compatibility.isLucky ? "Lucky Name Alignment!" : "Compatibility Alignment Check"}
-                </h5>
-                <p className="text-xs mt-1">
-                  {result.compatibility.isLucky
-                    ? `Perfect match: Name Number ${result.nameNumber} matches the lucky numbers series (${result.compatibility.bestSeries.join(", ")}) calculated for client DOB Combination ${result.compatibility.psychic}-${result.compatibility.destiny}.`
-                    : `Attention: Name Number ${result.nameNumber} is not inside the recommended lucky series (${result.compatibility.bestSeries.join(", ")}) for this DOB Combination. Spelling adjustment is advised.`}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Section B: Compound Meaning Description */}
-          <div className="rounded-xl border border-[#E8A020]/12 bg-white p-5">
-            <h4 className="font-display text-sm font-bold text-slate-800 border-b border-[#E8A020]/10 pb-2 mb-2">
-              Compound Number {result.compound} Interpretation
-            </h4>
-            <p className="text-sm text-slate-700 leading-relaxed mb-3">
-              {result.summary}
-            </p>
-            {result.famousExamples && result.famousExamples !== "—" && (
-              <p className="text-xs text-slate-500 font-semibold">
-                Famous Examples: <span className="text-slate-700">{result.famousExamples}</span>
-              </p>
-            )}
-          </div>
-
-          {/* Section C: Letter Breakdown */}
-          <div className="rounded-xl border border-[#E8A020]/12 overflow-hidden bg-white">
-            <div className="bg-[#E8A020]/5 px-4 py-2.5 border-b border-[#E8A020]/12">
-              <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-600">
-                Chaldean Name Letter Value Analysis
-              </h4>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-100 text-center">
-                <thead>
-                  <tr className="bg-slate-50">
-                    {result.letterBreakdown.map((item, idx) => (
-                      <th key={idx} className="px-3 py-2 text-xs font-bold text-slate-500 border-r border-slate-100 last:border-0">
-                        {item.letter}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    {result.letterBreakdown.map((item, idx) => (
-                      <td key={idx} className="px-3 py-2 text-sm font-bold text-[#D4700A] font-numeral border-r border-slate-100 last:border-0">
-                        {item.value}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Interactive Chaldean Alphabet Grid */}
-          <div className="rounded-xl border border-[#E8A020]/12 overflow-hidden bg-white p-5 space-y-4">
-            <div className="border-b border-slate-100 pb-2">
-              <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-600">
-                Interactive Chaldean Reference Grid
-              </h4>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5">
-                Highlighted letters are active in the entered name: &ldquo;{name.toUpperCase()}&rdquo;
-              </p>
-            </div>
-            
-            <div className="flex flex-wrap justify-center gap-2 md:grid md:grid-cols-9 md:gap-1 text-center">
-              {[
-                { val: 1, letters: ["A", "I", "J", "Q", "Y"] },
-                { val: 2, letters: ["B", "K", "R"] },
-                { val: 3, letters: ["C", "G", "L", "S"] },
-                { val: 4, letters: ["D", "M", "T"] },
-                { val: 5, letters: ["E", "H", "N", "X"] },
-                { val: 6, letters: ["U", "V", "W"] },
-                { val: 7, letters: ["O", "Z"] },
-                { val: 8, letters: ["F", "P"] },
-                { val: 9, letters: [] },
-              ].map((col) => {
-                return (
-                  <div key={col.val} className="flex flex-col gap-1.5 p-1 bg-slate-50/50 rounded border border-slate-100 min-w-[36px]">
-                    <span className="text-sm font-bold text-[#D4700A] border-b border-slate-200 pb-1 mb-1 font-numeral">
-                      {col.val}
-                    </span>
-                    {col.letters.length > 0 ? (
-                      col.letters.map((lettr) => {
-                        const isActive = name.toUpperCase().includes(lettr);
-                        return (
-                          <span
-                            key={lettr}
-                            className={`inline-block py-1 rounded text-xs font-bold transition-all ${
-                              isActive
-                                ? "bg-amber-500 text-white shadow-sm scale-105"
-                                : "bg-white border border-slate-200 text-slate-400 opacity-60"
-                            }`}
-                          >
-                            {lettr}
-                          </span>
-                        );
-                      })
-                    ) : (
-                      <span className="text-[9px] font-bold text-slate-300 italic py-2">
-                        Sacred
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Domain Scores */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Name Vibration Domain Scores
-            </h4>
-            <ScoreBars scores={result.scores} />
-          </div>
-
-          {/* AI Deep Dive */}
-          <AIDeepDive section="name" parameters={{ name, compound: result.compound, single: result.nameNumber, dob, psychic: result.compatibility?.psychic, destiny: result.compatibility?.destiny }} />
-        </div>
-      ) : (
-        <p className="text-sm text-slate-400 italic">Please enter a name to analyze.</p>
-      )}
-    </div>
-  );
-}
+// Name calculator removed, handled by UnifiedNameLaboratory
 
 // 3. LO SHU GRID ANALYSER
 function AdvancedLoShuGridAnalyser() {
@@ -1317,7 +1084,7 @@ function AdvancedPersonalYearAnalyser() {
 }
 
 // Shared UI Helpers
-function ScoreBars({ scores }: { scores: { health: number; relationships: number; finance: number } }) {
+export function ScoreBars({ scores }: { scores: { health: number; relationships: number; finance: number } }) {
   const domains = [
     { label: "Health & Well-being", val: scores.health, color: "bg-red-500" },
     { label: "Love & Relationships", val: scores.relationships, color: "bg-pink-500" },
@@ -1362,7 +1129,7 @@ function getMonthName(m: number): string {
   return names[m - 1] || `${m}`;
 }
 
-function AIDeepDive({ section, parameters }: { section: string, parameters: Record<string, unknown> }) {
+export function AIDeepDive({ section, parameters }: { section: string, parameters: Record<string, unknown> }) {
   const [report, setReport] = useState<string>("");
   const [loading, setLoading] = useState(false);
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Sparkles, Copy, FileText, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
-import { calculatePsychicNumber, calculateDestinyNumber } from "@/lib/numerology";
+import { calculatePsychicNumber, calculateDestinyNumber, calculateChaldeanNameNumber } from "@/lib/numerology";
 import {
   calcName,
   getSeriesVerdict,
@@ -10,8 +10,10 @@ import {
   generateNameSuggestions,
   PLANET_NAMES
 } from "@/lib/name-correction";
+import { DOB_COMBINATIONS } from "@/lib/numerology-interpretations";
+import { ScoreBars, AIDeepDive } from "./AdminNumerologyWorkspace";
 
-export function NameCorrectionTool() {
+export function UnifiedNameLaboratory() {
   const [clientName, setClientName] = useState("");
   const [dob, setDob] = useState("");
   const [seriesOverride, setSeriesOverride] = useState("");
@@ -27,8 +29,6 @@ export function NameCorrectionTool() {
       const detail = (e as CustomEvent).detail;
       if (detail?.name) setClientName(detail.name);
       if (detail?.dob) {
-        // Convert to YYYY-MM-DD if needed for input type="date", 
-        // but here we just use string as the backend accepts various formats
         setDob(detail.dob);
       }
     };
@@ -59,10 +59,20 @@ export function NameCorrectionTool() {
     if (analyzedOverride.trim()) {
       return analyzedOverride.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
     }
-    // Default favorable series based on Chaldean rules (1,3,5,6,9 are generally favorable)
-    // Avoid 4,7,8. 2 is neutral. We'll use 1,3,5,6,9 as a baseline if no specific overrides
+    try {
+      const combKey = `${psychic}-${destiny}`;
+      const comb = DOB_COMBINATIONS[combKey];
+      if (comb && comb.bestNameSeries) {
+        return comb.bestNameSeries.split(",").map(s => parseInt(s.trim()));
+      }
+    } catch {}
     return [1, 3, 5, 6, 9];
-  }, [analyzedOverride]);
+  }, [analyzedOverride, psychic, destiny]);
+
+  const oldCalc = useMemo(() => {
+    if (!analyzedName) return null;
+    return calculateChaldeanNameNumber(analyzedName);
+  }, [analyzedName]);
 
   const originalAnalysis = useMemo(() => {
     if (!analyzedName) return null;
@@ -86,16 +96,17 @@ export function NameCorrectionTool() {
     window.dispatchEvent(new CustomEvent('autofill-client', {
       detail: { name, dob: analyzedDob }
     }));
-    alert(`Pre-filled "${name}" in report generator`);
+    alert(`Pre-filled "${name}" across tools`);
+    setClientName(name);
   };
 
   return (
     <div className="grid lg:grid-cols-12 gap-8 items-start">
-      {/* LEFT PANEL: Input */}
+      {/* LEFT PANEL: Input & References */}
       <div className="lg:col-span-4 space-y-6">
         <div className="rounded-2xl border border-[#E8A020]/20 bg-white/75 p-6 shadow-sm">
           <h2 className="font-display text-2xl font-bold text-[#D4700A] mb-6">
-            Name Correction Suggester
+            Name Laboratory
           </h2>
           
           <div className="space-y-4">
@@ -114,10 +125,11 @@ export function NameCorrectionTool() {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Date of Birth
+                Date of Birth (Optional)
               </label>
               <input
-                type="date"
+                type="text"
+                placeholder="DD/MM/YYYY"
                 value={dob}
                 onChange={(e) => setDob(e.target.value)}
                 className="w-full min-h-10 px-3.5 rounded-xl border border-[#E8A020]/20 bg-white text-sm outline-none focus:border-[#E8A020]/60 focus:ring-1"
@@ -126,7 +138,7 @@ export function NameCorrectionTool() {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Recommended Series Override (Optional)
+                Recommended Series Override
               </label>
               <input
                 type="text"
@@ -135,50 +147,80 @@ export function NameCorrectionTool() {
                 placeholder="e.g. 1, 5, 6"
                 className="w-full min-h-10 px-3.5 rounded-xl border border-[#E8A020]/20 bg-white text-sm outline-none focus:border-[#E8A020]/60 focus:ring-1"
               />
-              <p className="text-[10px] text-slate-400 mt-1">Comma-separated target numbers. Overrides defaults.</p>
+              <p className="text-[10px] text-slate-400 mt-1">Comma-separated target numbers. Overrides DOB defaults.</p>
             </div>
 
             <button
               onClick={handleSearch}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#E8A020] to-[#D4700A] px-5 py-3 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
             >
-              <Sparkles className="h-4 w-4" /> Find Corrections
+              <Sparkles className="h-4 w-4" /> Analyze & Correct
             </button>
           </div>
         </div>
 
-        {/* Name Series Reference Card */}
         {hasSearched && (
-          <div className="rounded-2xl border border-[#E8A020]/20 bg-[#FDF9F1] p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
-              Series Compatibility
-            </h3>
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="border border-green-200 bg-green-50 text-green-700 rounded-lg p-2">
-                <span className="block font-bold">Favorable</span>
-                1, 3, 5, 6, 9
-              </div>
-              <div className="border border-amber-200 bg-amber-50 text-amber-700 rounded-lg p-2">
-                <span className="block font-bold">Neutral</span>
-                2
-              </div>
-              <div className="border border-red-200 bg-red-50 text-red-700 rounded-lg p-2">
-                <span className="block font-bold">Avoid</span>
-                4, 7, 8
-              </div>
-            </div>
-            {originalAnalysis && (
-              <p className="mt-3 text-xs text-slate-600 font-medium">
-                Current Name Series: <strong className="text-slate-800">{originalAnalysis.reduced} ({PLANET_NAMES[originalAnalysis.reduced]})</strong>
+          <div className="rounded-2xl border border-[#E8A020]/12 overflow-hidden bg-white p-5 space-y-4">
+            <div className="border-b border-slate-100 pb-2">
+              <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-600">
+                Interactive Chaldean Reference
+              </h4>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                Highlighted letters are active in &ldquo;{analyzedName.toUpperCase()}&rdquo;
               </p>
-            )}
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-2 md:grid md:grid-cols-3 md:gap-1 text-center">
+              {[
+                { val: 1, letters: ["A", "I", "J", "Q", "Y"] },
+                { val: 2, letters: ["B", "K", "R"] },
+                { val: 3, letters: ["C", "G", "L", "S"] },
+                { val: 4, letters: ["D", "M", "T"] },
+                { val: 5, letters: ["E", "H", "N", "X"] },
+                { val: 6, letters: ["U", "V", "W"] },
+                { val: 7, letters: ["O", "Z"] },
+                { val: 8, letters: ["F", "P"] },
+                { val: 9, letters: [] },
+              ].map((col) => {
+                return (
+                  <div key={col.val} className="flex flex-col gap-1 p-1 bg-slate-50/50 rounded border border-slate-100">
+                    <span className="text-sm font-bold text-[#D4700A] border-b border-slate-200 pb-1 mb-1 font-numeral">
+                      {col.val}
+                    </span>
+                    <div className="flex flex-wrap justify-center gap-1">
+                      {col.letters.length > 0 ? (
+                        col.letters.map((lettr) => {
+                          const isActive = analyzedName.toUpperCase().includes(lettr);
+                          return (
+                            <span
+                              key={lettr}
+                              className={`inline-block px-1 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                isActive
+                                  ? "bg-amber-500 text-white shadow-sm"
+                                  : "bg-white border border-slate-200 text-slate-400 opacity-60"
+                              }`}
+                            >
+                              {lettr}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="text-[9px] font-bold text-slate-300 italic py-1">
+                          Sacred
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
 
       {/* RIGHT PANEL: Results */}
       <div className="lg:col-span-8 space-y-6">
-        {hasSearched && originalAnalysis && (
+        {hasSearched && originalAnalysis && oldCalc && (
           <>
             {/* Section 1 - Current Name Analysis */}
             <div className="rounded-2xl border border-[#E8A020]/20 bg-white/75 p-6 shadow-sm">
@@ -208,25 +250,23 @@ export function NameCorrectionTool() {
                 )}
               </div>
 
-              {/* Letter breakdown */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {originalAnalysis.letterValues.map((lv, i) => (
-                  <div key={i} className="flex flex-col items-center justify-center w-10 h-12 rounded bg-[#FDF9F1] border border-[#E8A020]/30 shadow-sm">
-                    <span className="font-display text-lg font-bold text-slate-800 leading-none">{lv.letter}</span>
-                    <span className="text-[10px] text-[#D4700A] font-bold">{lv.value}</span>
-                  </div>
-                ))}
-              </div>
-
               {/* Running sum */}
-              <div className="flex items-center gap-3 text-sm font-semibold text-slate-500 mb-6 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                <div className="flex-1 truncate">
-                  {originalAnalysis.letterValues.map(lv => `${lv.letter}(${lv.value})`).join(' + ')}
+              <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-500 mb-6 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                <div className="flex-1 min-w-[200px] break-all leading-relaxed">
+                  {originalAnalysis.letterValues.map((lv, i) => (
+                    <span key={i} className="inline-flex items-center">
+                      <span className="text-slate-800">{lv.letter}</span>
+                      <span className="text-[#D4700A] text-[10px] mx-0.5">({lv.value})</span>
+                      {i < originalAnalysis.letterValues.length - 1 && <span className="mx-1">+</span>}
+                    </span>
+                  ))}
                 </div>
-                <span>=</span>
-                <span className="text-lg text-slate-800">{originalAnalysis.compound}</span>
-                <span>→</span>
-                <span className="text-xl text-[#D4700A]">{originalAnalysis.reduced}</span>
+                <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
+                  <span>=</span>
+                  <span className="text-xl text-slate-800">{originalAnalysis.compound}</span>
+                  <span>→</span>
+                  <span className="text-2xl text-[#D4700A]">{originalAnalysis.reduced}</span>
+                </div>
               </div>
 
               {/* Warnings */}
@@ -247,13 +287,32 @@ export function NameCorrectionTool() {
                 <div className="mb-4 rounded-xl bg-amber-50 p-4 border border-amber-200 flex items-start gap-3 text-amber-800">
                   <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-bold text-sm">3 vs 6 Opposition Warning</h4>
+                    <h4 className="font-bold text-sm">Critical 3 vs 6 Opposition Warning</h4>
                     <p className="text-xs mt-1 leading-relaxed">
                       A severe clash exists between the name number ({originalAnalysis.reduced}) and the core numbers (Psychic {psychic} / Destiny {destiny}). The opposition of Jupiter (3) and Venus (6) creates friction between spiritual and material pursuits.
                     </p>
                   </div>
                 </div>
               )}
+
+              {/* Meaning from Old Calc */}
+              <div className="rounded-xl border border-[#E8A020]/12 bg-white p-4 mb-4">
+                <h4 className="font-display text-sm font-bold text-slate-800 border-b border-[#E8A020]/10 pb-2 mb-2">
+                  Compound Number {oldCalc.compound} Interpretation
+                </h4>
+                <p className="text-sm text-slate-700 leading-relaxed mb-3">
+                  {oldCalc.summary}
+                </p>
+              </div>
+
+              {/* Domain Scores */}
+              <div className="mb-4">
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Name Vibration Domain Scores
+                </h4>
+                <ScoreBars scores={oldCalc.scores} />
+              </div>
+
             </div>
 
             {/* Section 2 - Suggested Corrections */}
@@ -318,11 +377,15 @@ export function NameCorrectionTool() {
                     No exact spelling improvements found for the recommended series.
                   </p>
                   <p className="text-xs text-slate-500 mt-2 max-w-md mx-auto">
-                    Uma, a first name change or adjusted surname may be required. 
                     Consider modifying the recommended series override or manually adjusting letters to find an optimal compound.
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* AI Deep Dive */}
+            <div className="mt-6">
+              <AIDeepDive section="name" parameters={{ name: analyzedName, compound: originalAnalysis.compound, single: originalAnalysis.reduced, dob: analyzedDob, psychic, destiny }} />
             </div>
           </>
         )}
