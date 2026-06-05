@@ -25,7 +25,7 @@ export function renderReportHTML(data: any) {
 
   const pc = getColor(data.psychicPlanet) || getColor(data.psychicNumber);
   const dc = getColor(data.destinyPlanet) || getColor(data.destinyNumber);
-  const nc = data.overallRating;
+  const domains = data.domainDescriptions;
 
   let loshuGridHtml = '';
   if (data.loShuGrid && data.loShuGrid.grid) {
@@ -156,7 +156,7 @@ export function renderReportHTML(data: any) {
   /* INSIGHT BLOCK */
   .insight-block{background:#FFFFFF;border:1px solid rgba(201,151,58,.18);border-radius:12px;padding:24px;margin-bottom:16px;}
   .insight-block-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#C9973A;margin-bottom:12px;}
-  .insight-block-text{font-size:13px;color:rgba(28,25,23,.75);line-height:1.9;}
+  .insight-block-text{font-size:13px;color:rgba(28,25,23,.75);line-height:1.9;white-space:pre-wrap;}
   
   /* GIFTS LIST */
   .gifts-list{display:flex;flex-direction:column;gap:14px;margin-bottom:28px;}
@@ -290,27 +290,27 @@ export function renderReportHTML(data: any) {
 
   <!-- THREE DOMAINS -->
   <div class="section-title">✦ Three Life Domains</div>
-  <div class="domains-row">
-    <div class="domain-card">
-      <div class="domain-icon">💚</div>
-      <div class="domain-label">Health & Vitality</div>
-      <div class="domain-bar-wrap"><div class="domain-bar" style="width:${(nc?.health||6)*10}%;background:#22C55E"></div></div>
-      <div class="domain-score" style="color:#22C55E">${nc?.health||6}/10</div>
-      <div class="domain-verdict">${(nc?.health||6)>=8?'Strong':nc?.health>=6?'Moderate':'Needs Attention'}</div>
+  <div class="domains-row" style="display:flex; flex-direction:column; gap:16px;">
+    <div class="domain-card" style="text-align:left; padding:20px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div class="domain-icon" style="margin:0;">💚</div>
+        <div class="domain-label" style="margin:0;">Health & Vitality</div>
+      </div>
+      <div style="font-size:13px; color:rgba(28,25,23,.75); line-height:1.6; white-space:pre-wrap;">${domains?.health || '-'}</div>
     </div>
-    <div class="domain-card">
-      <div class="domain-icon">💕</div>
-      <div class="domain-label">Relationships</div>
-      <div class="domain-bar-wrap"><div class="domain-bar" style="width:${(nc?.relationships||7)*10}%;background:#BE185D"></div></div>
-      <div class="domain-score" style="color:#BE185D">${nc?.relationships||7}/10</div>
-      <div class="domain-verdict">${(nc?.relationships||7)>=8?'Strong':nc?.relationships>=6?'Moderate':'Needs Attention'}</div>
+    <div class="domain-card" style="text-align:left; padding:20px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div class="domain-icon" style="margin:0;">💕</div>
+        <div class="domain-label" style="margin:0;">Relationships</div>
+      </div>
+      <div style="font-size:13px; color:rgba(28,25,23,.75); line-height:1.6; white-space:pre-wrap;">${domains?.relationships || '-'}</div>
     </div>
-    <div class="domain-card">
-      <div class="domain-icon">💰</div>
-      <div class="domain-label">Career & Finance</div>
-      <div class="domain-bar-wrap"><div class="domain-bar" style="width:${(nc?.career||7)*10}%;background:#C9973A"></div></div>
-      <div class="domain-score" style="color:#C9973A">${nc?.career||7}/10</div>
-      <div class="domain-verdict">${(nc?.career||7)>=8?'Strong':nc?.career>=6?'Moderate':'Needs Attention'}</div>
+    <div class="domain-card" style="text-align:left; padding:20px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <div class="domain-icon" style="margin:0;">💰</div>
+        <div class="domain-label" style="margin:0;">Career & Finance</div>
+      </div>
+      <div style="font-size:13px; color:rgba(28,25,23,.75); line-height:1.6; white-space:pre-wrap;">${domains?.career || '-'}</div>
     </div>
   </div>
 
@@ -368,9 +368,17 @@ export function renderReportHTML(data: any) {
     <div class="challenge-item">
       <div class="challenge-label">⚠ ${c.challenge}</div>
       <div class="remedy-label">Remedy</div>
-      <div class="remedy-text">• ${c.remedy}</div>
+      <div class="remedy-text" style="white-space:pre-wrap;">• ${c.remedy}</div>
     </div>`).join('')}
   </div>
+
+  ${data.psychicDestinyTension ? `
+  <!-- TENSION -->
+  <div class="section-title">✦ Psychic–Destiny Number Tension</div>
+  <div class="insight-block" style="margin-bottom:28px">
+    <div class="insight-block-text">${data.psychicDestinyTension}</div>
+  </div>
+  ` : ''}
 
   ${data.timingAndPeriods ? `
   <!-- TIMING & PERIODS -->
@@ -392,10 +400,10 @@ export function renderReportHTML(data: any) {
   </div>
   ` : ''}
 
-  <!-- SERVICE SPECIFIC -->
-  <div class="section-title">✦ ${data.serviceSpecificInsight?.heading || 'Insight'}</div>
+  <!-- CAREER GUIDANCE -->
+  <div class="section-title">✦ Career Guidance</div>
   <div class="insight-block" style="margin-bottom:28px">
-    <div class="insight-block-text">${data.serviceSpecificInsight?.content || '-'}</div>
+    <div class="insight-block-text">${data.careerGuidance || '-'}</div>
   </div>
 
   <!-- HEALTH -->
@@ -406,16 +414,12 @@ export function renderReportHTML(data: any) {
 
   <!-- LUCKY ELEMENTS -->
   <div class="section-title">✦ Lucky Elements</div>
-  <div class="lucky-grid">
-    <div class="lucky-card">
-      <div class="lucky-card-title">Lucky Days</div>
-      ${(data.luckyElements?.days || []).map((d: any)=>`<span class="lucky-pill">${d}</span>`).join('')}
-    </div>
+  <div class="lucky-grid" style="grid-template-columns: repeat(2, 1fr);">
     <div class="lucky-card">
       <div class="lucky-card-title">Lucky Colors</div>
       ${(data.luckyElements?.colors || []).map((c: any)=>`<span class="lucky-pill">${c}</span>`).join('')}
     </div>
-    <div class="lucky-card" style="grid-column: span 3;">
+    <div class="lucky-card">
       <div class="lucky-card-title">Number Compatibility</div>
       ${data.luckyElements?.friends ? `
       <div style="font-size:13px; margin-bottom:10px; margin-top:8px;">
@@ -438,7 +442,7 @@ export function renderReportHTML(data: any) {
   <div class="section-title">✦ Name Number Assessment</div>
   <div class="name-box">
     <div class="name-box-title">Chaldean Name Analysis</div>
-    <div class="name-box-text">${data.nameAssessment}</div>
+    <div class="name-box-text" style="white-space:pre-wrap;">${data.nameAssessment}</div>
     ${data.recommendedNameSeries?.length ? `
     <div class="name-box-title" style="margin-top:12px">Recommended Name Series</div>
     <div class="name-series">
@@ -446,6 +450,14 @@ export function renderReportHTML(data: any) {
       <div class="series-num" style="background:${getColor(n)}18;border:1.5px solid ${getColor(n)}50;color:${getColor(n)}">${n}</div>`).join('')}
     </div>` : ''}
   </div>` : ''}
+
+  ${data.generalLifeGuidance ? `
+  <!-- GENERAL LIFE GUIDANCE -->
+  <div class="section-title">✦ General Life Guidance</div>
+  <div class="insight-block" style="margin-bottom:28px">
+    <div class="insight-block-text" style="white-space:pre-wrap;">${data.generalLifeGuidance}</div>
+  </div>
+  ` : ''}
 
   <div class="ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
 
