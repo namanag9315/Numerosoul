@@ -53,6 +53,9 @@ export function renderReportHTML(data: any) {
   const favorablePeriods = textArray(data.timingAndPeriods?.favorable);
   const unfavorablePeriods = textArray(data.timingAndPeriods?.unfavorable);
   const luckyColors = textArray(data.luckyElements?.colors);
+  const summaryText = hasText(data.executiveSummary)
+    ? data.executiveSummary
+    : data.combinationReading;
   const naturalGifts = (Array.isArray(data.naturalGifts) ? data.naturalGifts : [])
     .filter((gift: any) => hasText(gift?.title) || hasText(gift?.description));
   const challengesAndGrowth = (Array.isArray(data.challengesAndGrowth) ? data.challengesAndGrowth : [])
@@ -451,7 +454,7 @@ export function renderReportHTML(data: any) {
   <div class="summary-block">
     <div class="summary-combo">${text(data.psychicNumber)} — ${text(data.destinyNumber)}</div>
     <div class="summary-nature">${text(data.combinationNature)}</div>
-    <div class="summary-text">${textBlock(data.executiveSummary)}</div>
+    <div class="summary-text">${textBlock(summaryText, 'This combination reading will appear after the report data is generated.')}</div>
   </div>
   
   <div class="insight-block">

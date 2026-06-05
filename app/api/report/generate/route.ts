@@ -68,6 +68,7 @@ OUTPUT FORMAT — return exactly this JSON structure:
   "nameNumber": number,
   "maturityNumber": number,
   "combinationNature": "string (Harmonious / Neutral / Challenging (Anti-Number) / Challenging (Planetary friction) / Opposite)",
+  "executiveSummary": "string (2-3 polished sentences summarizing the Psychic-Destiny combination, including the exact Psychic and Destiny numbers and the practical theme of the pairing)",
   "combinationReading": "string (If challenging, planetary explanation. If anti-number, remedies from KB.)",
   "corePersonality": "string (KB traits from psychic/master. Include 'dreamers not doers' for 11)",
   "soulUrgeMeaning": "string (Explicitly state Soul Urge Number: N. Then KB traits)",
@@ -384,6 +385,14 @@ export async function POST(req: Request) {
         : includesNumber(compatData.enemies, nameNumber)
           ? 'challenging and should be reviewed with remedies'
           : 'requires personal review';
+    const combinationNature = hasReportText(reportData.combinationNature)
+      ? reportData.combinationNature
+      : 'Neutral';
+    const practicalTheme = /challenging|enemy|anti|friction/i.test(combinationNature)
+      ? 'This pairing needs conscious balancing, patient communication, and practical remedies so the numbers work together instead of pulling in different directions.'
+      : /harmonious|favourable|favorable/i.test(combinationNature)
+        ? 'This pairing is naturally supportive and works best when the client uses the shared strengths with consistency and grounded action.'
+        : 'This pairing is workable and benefits from steady choices, clear priorities, and conscious use of both numbers.';
 
     reportData.clientName = clientName.trim();
     reportData.clientDob = clientDob.trim();
@@ -402,6 +411,10 @@ export async function POST(req: Request) {
     }
     if (!hasReportText(reportData.destinyArchetype)) {
       reportData.destinyArchetype = `Destiny Number ${destinyNumber}`;
+    }
+    if (!hasReportText(reportData.executiveSummary)) {
+      reportData.executiveSummary =
+        `Psychic Number ${psychicNumber} (${reportData.psychicPlanet || 'its ruling planet'}) and Destiny Number ${destinyNumber} (${reportData.destinyPlanet || 'its ruling planet'}) form a ${combinationNature} combination. ${practicalTheme}`;
     }
     if (!hasReportText(reportData.nameAssessment)) {
       reportData.nameAssessment = `Name Number: ${nameNumber} - This is ${nameQuality} for this chart based on the number compatibility table.`;
