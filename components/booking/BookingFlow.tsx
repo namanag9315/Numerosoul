@@ -39,12 +39,12 @@ const steps = ["Choose Service", "Pick Date & Time", "Your Details", "Payment"];
 const timeSlots = ["10:00 AM", "11:00 AM", "12:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
 const modes: BookingMode[] = ["Online (Video Call)", "WhatsApp Call", "In-Person"];
 const focusSuggestions = [
-  "I want clarity about my career and next 6-12 months.",
-  "Please check my name spelling and suggest corrections if needed.",
-  "I need help choosing a baby name with family harmony.",
-  "Please check compatibility for marriage or partnership.",
-  "I want to understand my Lo Shu grid, missing numbers, and remedies.",
-  "Please check my business name, launch date, and lucky colours.",
+  { label: "Career clarity", text: "I want clarity about my career and next 6-12 months." },
+  { label: "Name correction", text: "Please check my name spelling and suggest corrections if needed." },
+  { label: "Baby name", text: "I need help choosing a baby name with family harmony." },
+  { label: "Compatibility", text: "Please check compatibility for marriage or partnership." },
+  { label: "Lo Shu grid", text: "I want to understand my Lo Shu grid, missing numbers, and remedies." },
+  { label: "Business timing", text: "Please check my business name, launch date, and lucky colours." },
 ];
 const initialDetails: ClientDetails = {
   fullName: "",
@@ -328,7 +328,13 @@ export function BookingFlow() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: total }),
       });
-      const orderData = await orderResponse.json();
+      const orderData = await readJsonResponse<{
+        amount?: number;
+        currency?: string;
+        message?: string;
+        orderId?: string;
+        success?: boolean;
+      }>(orderResponse);
 
       if (!orderResponse.ok || !orderData.success) {
         throw new Error(orderData.message || "Failed to create order.");
@@ -437,17 +443,20 @@ export function BookingFlow() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="mx-auto max-w-7xl px-6 pb-20 pt-32 sm:px-10 lg:px-16">
+      <div className="booking-mobile-shell mx-auto max-w-7xl px-4 pb-28 pt-24 sm:px-10 sm:pb-20 sm:pt-32 lg:px-16">
         <div className="mx-auto max-w-4xl text-center">
-        <p className="eyebrow">✦ Secure your numerology session ✦</p>
-        <h1 className="mt-4 font-display text-5xl font-bold text-[color:var(--text-primary)]">
+        <p className="eyebrow text-[10px] sm:text-xs">✦ Secure your numerology session ✦</p>
+        <h1 className="mt-3 font-display text-4xl font-bold leading-tight text-[color:var(--text-primary)] sm:mt-4 sm:text-5xl">
           Book a <span className="italic text-[color:var(--sunrise-orange)]">Session</span>
         </h1>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
+          Choose your reading, pick a slot, add the details Uma needs, and complete payment in a few clear steps.
+        </p>
       </div>
 
       <ProgressIndicator currentStep={step} />
 
-      <div className="card-premium mt-10 p-5 sm:p-8">
+      <div id="booking-flow-panel" className="booking-flow-card card-premium mt-6 overflow-visible rounded-lg p-4 sm:mt-10 sm:p-8">
         {step === 0 && (
           <ServiceSelection
             selectedServiceId={selectedServiceId}
@@ -501,10 +510,10 @@ export function BookingFlow() {
           />
         )}
 
-        <div className="mt-8 flex flex-col gap-3 border-t border-[color:var(--saffron-gold)]/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="booking-action-bar sticky bottom-0 z-30 -mx-4 mt-6 flex flex-col gap-3 border-t border-[color:var(--saffron-gold)]/10 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:static sm:mx-0 sm:mt-8 sm:flex-row sm:items-center sm:justify-between sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-6 sm:backdrop-blur-0">
           <button
             type="button"
-            className="btn-secondary gap-2"
+            className="btn-secondary order-2 w-full gap-2 justify-center disabled:pointer-events-none disabled:opacity-45 sm:order-none sm:w-auto"
             disabled={step === 0}
             onClick={() => setStep((current) => Math.max(current - 1, 0))}
           >
@@ -515,7 +524,7 @@ export function BookingFlow() {
           {step < 3 ? (
             <button
               type="button"
-              className="btn-primary gap-2"
+              className="btn-primary order-1 w-full gap-2 justify-center disabled:pointer-events-none disabled:opacity-55 sm:order-none sm:w-auto"
               disabled={
                 (step === 0 && !selectedServiceId) ||
                 (step === 1 && (!selectedDate || !selectedSlot))
@@ -534,7 +543,7 @@ export function BookingFlow() {
           ) : (
             <Link
               href="/services"
-              className="btn-secondary"
+              className="btn-secondary order-1 w-full justify-center sm:order-none sm:w-auto"
             >
               Review Services
             </Link>
@@ -561,9 +570,28 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
 }
 
 function ProgressIndicator({ currentStep }: { currentStep: number }) {
+  const progressWidth = `${((currentStep + 1) / steps.length) * 100}%`;
+
   return (
-    <div className="mx-auto mt-10 max-w-4xl">
-      <div className="grid grid-cols-4 gap-2">
+    <div className="mx-auto mt-6 max-w-4xl sm:mt-10">
+      <div className="rounded-lg border border-[color:var(--border)] bg-white/85 p-3 shadow-sm sm:hidden">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-xs font-semibold uppercase text-[color:var(--sunrise-orange)]">
+            Step {currentStep + 1} of {steps.length}
+          </span>
+          <span className="text-right text-sm font-semibold text-[color:var(--text-primary)]">
+            {steps[currentStep]}
+          </span>
+        </div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-[color:var(--border)]">
+          <div
+            className="h-full rounded-full bg-[color:var(--sunrise-orange)] transition-all duration-500"
+            style={{ width: progressWidth }}
+          />
+        </div>
+      </div>
+
+      <div className="hidden grid-cols-4 gap-2 sm:grid">
         {steps.map((label, index) => {
           const completed = index < currentStep;
           const active = index === currentStep;
@@ -611,8 +639,8 @@ function ServiceSelection({
 }) {
   return (
     <div>
-      <StepTitle title="Choose Service" subtitle="Select the reading you want to book." />
-      <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <StepTitle title="Choose Service" subtitle="Select one reading. You can review price and duration before payment." />
+      <div className="mt-5 grid gap-3 sm:mt-8 md:grid-cols-2 xl:grid-cols-3">
         {SERVICES.map((service) => {
           const Icon = serviceIcons[service.icon];
           const selected = selectedServiceId === service.id;
@@ -621,7 +649,7 @@ function ServiceSelection({
             <button
               key={service.id}
               type="button"
-              className={`rounded-2xl border p-5 text-left transition-all duration-300 ${
+              className={`group rounded-lg border p-4 text-left transition-all duration-300 sm:p-5 ${
                 selected
                   ? "shadow-[0_16px_40px_rgba(249,115,22,0.15)]"
                   : "hover:border-[color:var(--sunrise-orange)]/30"
@@ -633,20 +661,28 @@ function ServiceSelection({
               }
               onClick={() => setSelectedServiceId(service.id)}
             >
-              <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ background: 'var(--white)', boxShadow: '0 0 16px rgba(249,115,22,0.08)' }}>
+              <div className="flex items-start gap-3 sm:gap-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:h-11 sm:w-11" style={{ background: 'var(--white)', boxShadow: '0 0 16px rgba(249,115,22,0.08)' }}>
                   <Icon className="h-5 w-5 text-[color:var(--sunrise-orange)]" strokeWidth={1.8} />
                 </span>
-                <span>
-                  <span className="block font-display text-2xl font-bold text-[color:var(--text-primary)]">
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-xl font-bold leading-tight text-[color:var(--text-primary)] sm:text-2xl">
                     {service.title}
                   </span>
-                  <span className="mt-1 block font-numeral text-sm text-[color:var(--sunrise-orange)]">
-                    {service.price}
+                  <span className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="font-numeral text-sm font-semibold text-[color:var(--sunrise-orange)]">
+                      {service.price}
+                    </span>
+                    <span className="rounded-full bg-[color:var(--ethereal-pearl)] px-2.5 py-1 text-[11px] font-medium text-[color:var(--text-muted)]">
+                      {service.duration}
+                    </span>
                   </span>
                 </span>
               </div>
-              <span className={`mt-5 inline-flex rounded-full px-4 py-2 text-xs font-medium ${
+              <p className="mt-3 hidden text-xs leading-5 text-[color:var(--text-secondary)] sm:block">
+                {service.tagline}
+              </p>
+              <span className={`mt-4 inline-flex min-h-10 items-center rounded-full px-4 py-2 text-xs font-medium ${
                 selected ? 'text-white' : 'text-[color:var(--text-secondary)]'
               }`} style={
                 selected
@@ -703,37 +739,47 @@ function DateTimeStep({
 
   return (
     <div>
-      <StepTitle title="Pick Date & Time" subtitle="Past dates and fully booked dates are disabled." />
+      <StepTitle title="Pick Date & Time" subtitle="Choose a date first, then tap the time slot that works best." />
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-        <div className="rounded-[8px] border border-[color:var(--border)] bg-white/55 p-5">
+      <div className="mt-5 grid gap-6 sm:mt-8 lg:grid-cols-[1fr_0.9fr] lg:gap-8">
+        <div className="rounded-lg border border-[color:var(--border)] bg-white/70 p-3 sm:p-5">
           <div className="flex items-center justify-between">
             <button
               type="button"
-              className="rounded-full border border-[color:var(--border)] p-2 text-[color:var(--text-secondary)]"
+              aria-label="Previous month"
+              className="flex h-11 w-11 items-center justify-center rounded-lg border border-[color:var(--border)] text-[color:var(--text-secondary)]"
               onClick={() => setVisibleMonth((date) => addMonths(date, -1))}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <h3 className="font-display text-2xl font-medium text-[color:var(--text-primary)]">
+            <h3 className="px-2 text-center font-display text-xl font-medium text-[color:var(--text-primary)] sm:text-2xl">
               {visibleMonth.toLocaleString("en-IN", { month: "long", year: "numeric" })}
             </h3>
             <button
               type="button"
-              className="rounded-full border border-[color:var(--border)] p-2 text-[color:var(--text-secondary)]"
+              aria-label="Next month"
+              className="flex h-11 w-11 items-center justify-center rounded-lg border border-[color:var(--border)] text-[color:var(--text-secondary)]"
               onClick={() => setVisibleMonth((date) => addMonths(date, 1))}
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="mt-6 grid grid-cols-7 gap-2 text-center text-xs font-medium uppercase tracking-[1px] text-[color:var(--text-muted)]">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <span key={day}>{day}</span>
+          <div className="mt-5 grid grid-cols-7 gap-1.5 text-center text-[11px] font-medium uppercase text-[color:var(--text-muted)] sm:mt-6 sm:gap-2 sm:text-xs">
+            {[
+              ["Sunday", "S"],
+              ["Monday", "M"],
+              ["Tuesday", "T"],
+              ["Wednesday", "W"],
+              ["Thursday", "T"],
+              ["Friday", "F"],
+              ["Saturday", "S"],
+            ].map(([full, short]) => (
+              <span key={full} aria-label={full}>{short}</span>
             ))}
           </div>
 
-          <div className="mt-3 grid grid-cols-7 gap-2">
+          <div className="mt-3 grid grid-cols-7 gap-1.5 sm:gap-2">
             {days.map((day, index) => {
               if (!day) {
                 return <span key={`blank-${index}`} />;
@@ -750,7 +796,7 @@ function DateTimeStep({
                   type="button"
                   disabled={disabled}
                   onClick={() => selectDate(day)}
-                  className={`aspect-square rounded-full text-sm transition ${
+                  className={`aspect-square min-h-10 rounded-lg text-sm transition ${
                     selected
                       ? "bg-[color:var(--sunrise-orange)] text-white"
                       : disabled
@@ -767,16 +813,21 @@ function DateTimeStep({
 
         <div className="space-y-6">
           <div>
-            <h3 className="font-display text-2xl font-medium text-[color:var(--text-primary)]">
+            <h3 className="font-display text-xl font-medium text-[color:var(--text-primary)] sm:text-2xl">
               Available Slots
             </h3>
-            <div className="mt-4 flex flex-wrap gap-3">
+            {selectedDate && (
+              <p className="mt-1 text-xs font-medium text-[color:var(--sunrise-orange)]">
+                {formatDisplayDate(selectedDate)}
+              </p>
+            )}
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
               {(selectedDate ? availableSlots : []).map((slot) => (
                 <button
                   key={slot}
                   type="button"
                   onClick={() => selectSlot(slot)}
-                  className={`rounded-full border px-4 py-2 text-sm transition ${
+                  className={`min-h-11 rounded-lg border px-3 py-2 text-sm font-medium transition sm:px-4 ${
                     selectedSlot === slot
                       ? "border-[color:var(--sunrise-orange)] bg-[color:var(--sunrise-orange)] text-white"
                       : "border-[color:var(--border)] bg-white text-[color:var(--text-secondary)] hover:border-[color:var(--sunrise-orange)]"
@@ -786,12 +837,12 @@ function DateTimeStep({
                 </button>
               ))}
               {!selectedDate && (
-                <p className="text-sm text-[color:var(--text-muted)]">
+                <p className="col-span-2 rounded-lg border border-dashed border-[color:var(--border)] bg-white/65 p-4 text-sm text-[color:var(--text-muted)]">
                   Select a date to see time slots.
                 </p>
               )}
               {selectedDate && availableSlots.length === 0 && (
-                <p className="text-sm text-[color:var(--text-muted)]">
+                <p className="col-span-2 rounded-lg border border-dashed border-[color:var(--border)] bg-white/65 p-4 text-sm text-[color:var(--text-muted)]">
                   This date is fully booked.
                 </p>
               )}
@@ -810,16 +861,16 @@ function DateTimeStep({
           </div>
 
           <div>
-            <h3 className="font-display text-2xl font-medium text-[color:var(--text-primary)]">
+            <h3 className="font-display text-xl font-medium text-[color:var(--text-primary)] sm:text-2xl">
               Session Mode
             </h3>
-            <div className="mt-4 grid gap-3">
+            <div className="mt-4 grid gap-2 sm:gap-3">
               {modes.map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => setSelectedMode(mode)}
-                  className={`rounded-full border px-5 py-3 text-sm transition ${
+                  className={`min-h-12 rounded-lg border px-4 py-3 text-sm font-medium transition ${
                     selectedMode === mode
                       ? "border-[color:var(--sunrise-orange)] bg-[color:var(--orange-pale)] text-[color:var(--sunrise-orange)]"
                       : "border-[color:var(--border)] bg-white text-[color:var(--text-secondary)]"
@@ -876,9 +927,9 @@ function DetailsStep({
       <StepTitle title="Your Details" subtitle="Share the exact details Uma should use for your reading." />
       
       {session && profiles.length > 0 && (
-        <div className="mt-6 rounded-2xl border border-[#E8A020]/20 bg-white/60 p-5 shadow-sm">
+        <div className="mt-5 rounded-lg border border-[#E8A020]/20 bg-white/70 p-4 shadow-sm sm:mt-6 sm:p-5">
           <h4 className="font-display text-lg font-bold text-slate-800 mb-3">Who is this booking for?</h4>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2 sm:flex sm:flex-wrap">
             {profiles.map(p => (
               <button
                 key={p.id}
@@ -890,7 +941,7 @@ function DetailsStep({
                   phone: p.phone || "",
                   email: p.email || session.user.email || ""
                 }))}
-                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-[#E8A020] hover:bg-[#FFFDF9] hover:text-[#D4700A] transition-all"
+                className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-all hover:border-[#E8A020] hover:bg-[#FFFDF9] hover:text-[#D4700A]"
               >
                 {p.name}
               </button>
@@ -898,7 +949,7 @@ function DetailsStep({
             <button
               type="button"
               onClick={() => setDetails({ fullName: "", dob: "", phone: "", email: session.user.email || "", focus: "", additional: "" })}
-              className="rounded-full border border-dashed border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 hover:border-slate-400 hover:bg-slate-100 transition-all"
+              className="min-h-11 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 transition-all hover:border-slate-400 hover:bg-slate-100"
             >
               + Add Someone Else
             </button>
@@ -907,14 +958,14 @@ function DetailsStep({
       )}
 
       {!session && (
-        <div className="mt-6 rounded-2xl border border-[#E8A020]/20 bg-[#FFFDF9] p-5 shadow-sm sm:flex items-center justify-between">
+        <div className="mt-5 items-center justify-between rounded-lg border border-[#E8A020]/20 bg-[#FFFDF9] p-4 shadow-sm sm:mt-6 sm:flex sm:p-5">
           <div>
             <h4 className="font-display text-lg font-bold text-slate-800">Save Your Booking History</h4>
             <p className="text-sm text-slate-600 mt-1">Sign in to track your upcoming sessions and access past reports.</p>
           </div>
           <button
             onClick={handleSignIn}
-            className="mt-4 sm:mt-0 flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
+            className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95 sm:mt-0 sm:w-auto"
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -927,7 +978,7 @@ function DetailsStep({
         </div>
       )}
 
-      <div className="mt-8 grid gap-5 md:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:gap-5 md:grid-cols-2">
         <Field
           label="Full Name"
           error={errors.fullName}
@@ -981,15 +1032,15 @@ function DetailsStep({
           className="md:col-span-2"
           hint="Choose a suggestion or write your own. Be specific about decisions, names, dates, relationships, business, career, or remedies."
         >
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="booking-chip-row mb-3 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
             {focusSuggestions.map((suggestion) => (
               <button
-                key={suggestion}
+                key={suggestion.label}
                 type="button"
-                onClick={() => addFocusSuggestion(suggestion)}
-                className="rounded-full border border-[color:var(--saffron-gold)]/20 bg-[color:var(--orange-pale)]/55 px-3 py-2 text-left text-xs font-medium leading-5 text-[color:var(--text-secondary)] transition hover:border-[color:var(--sunrise-orange)] hover:bg-[color:var(--orange-pale)] hover:text-[color:var(--sunrise-orange)]"
+                onClick={() => addFocusSuggestion(suggestion.text)}
+                className="min-h-10 shrink-0 rounded-full border border-[color:var(--saffron-gold)]/20 bg-[color:var(--orange-pale)]/55 px-3 py-2 text-left text-xs font-medium leading-5 text-[color:var(--text-secondary)] transition hover:border-[color:var(--sunrise-orange)] hover:bg-[color:var(--orange-pale)] hover:text-[color:var(--sunrise-orange)]"
               >
-                {suggestion}
+                {suggestion.label}
               </button>
             ))}
           </div>
@@ -1056,9 +1107,9 @@ function PaymentStep({
     <div>
       <StepTitle title="Payment" subtitle="Review your booking summary and complete payment securely." />
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_0.85fr]">
-        <div className="rounded-[8px] border border-[color:var(--border)] bg-white/55 p-6">
-          <h3 className="font-display text-2xl font-medium text-[color:var(--text-primary)]">
+      <div className="mt-5 grid gap-5 sm:mt-8 lg:grid-cols-[1fr_0.85fr] lg:gap-8">
+        <div className="rounded-lg border border-[color:var(--border)] bg-white/70 p-4 sm:p-6">
+          <h3 className="font-display text-xl font-medium text-[color:var(--text-primary)] sm:text-2xl">
             Booking Summary
           </h3>
           <dl className="mt-5 space-y-4 text-sm">
@@ -1068,7 +1119,7 @@ function PaymentStep({
             <SummaryRow label="Mode" value={selectedMode} />
           </dl>
 
-          <div className="mt-7 flex gap-3">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <input
               className="tool-input"
               value={couponInput}
@@ -1079,7 +1130,7 @@ function PaymentStep({
               type="button"
               onClick={applyCoupon}
               disabled={couponLoading}
-              className="min-w-28 rounded-full bg-[color:var(--text-primary)] px-5 text-sm font-medium text-white disabled:opacity-50"
+              className="min-h-12 min-w-28 rounded-lg bg-[color:var(--text-primary)] px-5 text-sm font-medium text-white disabled:opacity-50 sm:min-h-0"
             >
               {couponLoading ? "Checking" : "Apply"}
             </button>
@@ -1091,8 +1142,8 @@ function PaymentStep({
           )}
         </div>
 
-        <div className="rounded-[8px] border border-[color:var(--orange-pale)] bg-[color:var(--orange-pale)]/45 p-6 flex flex-col items-center">
-          <h3 className="font-display text-2xl font-medium text-[color:var(--text-primary)] w-full text-left mb-4">
+        <div className="flex flex-col items-center rounded-lg border border-[color:var(--orange-pale)] bg-[color:var(--orange-pale)]/45 p-4 sm:p-6">
+          <h3 className="font-display text-xl font-medium text-[color:var(--text-primary)] w-full text-left mb-4 sm:text-2xl">
             Total Breakdown
           </h3>
           <div className="w-full space-y-3 text-sm text-[color:var(--text-secondary)] mb-6">
@@ -1118,7 +1169,7 @@ function PaymentStep({
             type="button"
             onClick={payNow}
             disabled={paymentLoading}
-            className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[color:var(--sunrise-orange)] px-6 text-sm font-medium text-white shadow-[0_16px_34px_rgba(249,115,22,0.15)] transition hover:bg-[#d95c11] disabled:opacity-55"
+            className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-[color:var(--sunrise-orange)] px-6 text-sm font-medium text-white shadow-[0_16px_34px_rgba(249,115,22,0.15)] transition hover:bg-[#d95c11] disabled:opacity-55"
           >
             {paymentLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             Pay via Razorpay
@@ -1133,7 +1184,7 @@ function PaymentStep({
 function StepTitle({ subtitle, title }: { subtitle: string; title: string }) {
   return (
     <div>
-      <h2 className="font-display text-4xl font-medium text-[color:var(--text-primary)]">
+      <h2 className="font-display text-3xl font-medium leading-tight text-[color:var(--text-primary)] sm:text-4xl">
         {title}
       </h2>
       <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
@@ -1159,7 +1210,7 @@ function Field({
   required?: boolean;
 }) {
   return (
-    <label className={`block ${className}`}>
+    <label className={`block w-full min-w-0 ${className}`}>
       <span className="text-sm font-medium text-[color:var(--text-primary)]">
         {label}
         {required && <span className="text-[color:var(--rose)]"> *</span>}
@@ -1177,7 +1228,7 @@ function Field({
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-5">
+    <div className="flex items-start justify-between gap-5">
       <dt className="text-[color:var(--text-muted)]">{label}</dt>
       <dd className="text-right font-medium text-[color:var(--text-primary)]">{value}</dd>
     </div>

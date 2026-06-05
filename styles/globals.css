@@ -329,6 +329,49 @@ body::after {
     box-shadow: 0 16px 40px rgba(15, 23, 42, 0.05);
   }
 
+  .booking-mobile-shell .tool-input,
+  .booking-mobile-shell textarea {
+    box-sizing: border-box;
+    max-width: 100%;
+    min-height: 48px;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .booking-mobile-shell label,
+  .booking-mobile-shell label > span {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .booking-mobile-shell .tool-input:focus,
+  .booking-mobile-shell textarea:focus {
+    border-color: var(--sunrise-orange);
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12), 0 8px 24px rgba(249, 115, 22, 0.08);
+  }
+
+  .booking-flow-card {
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+  }
+
+  .booking-action-bar {
+    box-shadow: 0 -18px 38px rgba(15, 23, 42, 0.08);
+  }
+
+  .booking-chip-row {
+    scrollbar-width: none;
+  }
+
+  .booking-chip-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    .booking-action-bar {
+      box-shadow: none;
+    }
+  }
+
   /* ── Section gradients (mood zones) ── */
   .section-warm {
     background: linear-gradient(135deg, var(--ethereal-pearl) 0%, var(--violet-pale) 100%);
