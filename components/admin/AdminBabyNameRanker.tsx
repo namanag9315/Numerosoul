@@ -5,9 +5,8 @@ import { Baby, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import {
   calculatePsychicNumber,
   calculateDestinyNumber,
-  calculateChaldeanNameNumber,
-  checkNameCompatibility,
 } from "@/lib/numerology";
+import { calcName, getSeriesVerdict, hasOpposition, PLANET_NAMES } from "@/lib/name-correction";
 
 export function AdminBabyNameRanker() {
   const [dob, setDob] = useState("");
@@ -24,12 +23,32 @@ export function AdminBabyNameRanker() {
       const names = namesText.split(/[,\n]+/).map(n => n.trim()).filter(Boolean);
       
       const ranked = names.map(name => {
-        const calc = calculateChaldeanNameNumber(name);
-        const comp = checkNameCompatibility(calc.nameNumber, psychic, destiny);
-        return { name, calc, comp };
+        const calc = calcName(name);
+        const verdict = getSeriesVerdict(calc.reduced);
+        const opposition = hasOpposition(calc.reduced, psychic, destiny);
+        
+        let rating = verdict;
+        let message = `Series ${calc.reduced} (${PLANET_NAMES[calc.reduced]}) is considered ${verdict}.`;
+        
+        if (opposition) {
+          rating = 'avoid';
+          message = `Severe 3 vs 6 opposition detected with core numbers. Avoid.`;
+        } else if (verdict === 'avoid') {
+          message = `Harmful vibration series detected (${calc.reduced}). Avoid.`;
+        }
+
+        return { 
+          name, 
+          calc: {
+            compound: calc.compound,
+            nameNumber: calc.reduced,
+            planet: PLANET_NAMES[calc.reduced],
+          }, 
+          comp: { rating, message } 
+        };
       });
       
-      const order = { excellent: 1, good: 2, neutral: 3, challenging: 4 };
+      const order = { excellent: 1, good: 2, neutral: 3, avoid: 4 };
       ranked.sort((a, b) => (order[a.comp.rating as keyof typeof order] || 5) - (order[b.comp.rating as keyof typeof order] || 5));
       
       setResults(ranked);
@@ -126,3 +145,4 @@ export function AdminBabyNameRanker() {
     </div>
   );
 }
+
